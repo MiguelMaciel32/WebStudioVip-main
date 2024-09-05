@@ -53,7 +53,7 @@ export default function PaginaDeProdutos() {
                     width={200}
                     className="w-full object-cover aspect-square rounded-md"
                     alt={product.company_name || 'Imagem da empresa'}
-                    src={product.logo || '/default-image.jpg'}
+                    src={product.logo || '/Empresa.jpg'}
                   />
                 </CardHeader>
                 <CardContent className="flex space-y-4">

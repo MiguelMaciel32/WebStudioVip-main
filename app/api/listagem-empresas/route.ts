@@ -5,7 +5,7 @@ export async function GET() {
   try {
     // Ajuste a consulta para refletir a tabela correta e as colunas
     const results = await query(
-      'SELECT id, company_name, address, logo FROM companies WHERE company_name IS NOT NULL'
+      'SELECT id, nome_empresa AS company_name, address, logo FROM empresas WHERE nome_empresa IS NOT NULL'
     );
 
     return NextResponse.json(results, { status: 200 });

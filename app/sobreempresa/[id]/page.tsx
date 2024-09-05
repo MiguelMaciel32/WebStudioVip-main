@@ -1,8 +1,23 @@
 'use client';
-
-import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useParams } from 'next/navigation';
+import AgendamentoTrigger from "@/components/AgendamentoTrigger";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Instagram, Phone } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+
+
+
+
 
 // Interface que define o formato dos dados da empresa
 interface Empresa {
@@ -18,35 +33,105 @@ interface Empresa {
 
 // Componente da página sobre a empresa
 function SobreEmpresa() {
-  const router = useRouter(); // Hook para acessar o roteador e obter o ID da empresa
-  const { id } = router.query; // Captura o 'id' da URL
-  const [empresa, setEmpresa] = useState<Empresa | null>(null); // Estado para armazenar os dados da empresa
+  const { id } = useParams();
+  const [empresa, setEmpresa] = useState<Empresa | null>(null);
 
   useEffect(() => {
-    if (id) {  // Verifica se o ID está disponível
-      fetch(`/api/empresa?id=${id}`)  // Faz uma requisição à API para buscar os dados da empresa
+    if (id) {
+      fetch(`/api/empresa?id=${id}`)
         .then((response) => response.json())
-        .then((data) => setEmpresa(data)) // Armazena os dados da empresa no estado
-        .catch((error) => console.error('Erro ao buscar empresa:', error)); // Lida com erros
+        .then((data) => setEmpresa(data))
+        .catch((error) => console.error('Erro ao buscar empresa:', error));
     }
-  }, [id]); // O efeito depende do ID
+  }, [id]);
 
-  if (!empresa) { // Enquanto os dados estão carregando, exibe uma mensagem
+  if (!empresa) {
     return <p>Carregando...</p>;
   }
 
-  // Renderiza os dados da empresa
   return (
     <div>
-      <h1>{empresa.nome_empresa}</h1>
-      <p>Email: {empresa.email}</p>
-      <p>CNPJ: {empresa.cnpj}</p>
-      <p>Telefone: {empresa.telefone}</p>
-      <p>Sobre: {empresa.sobre || 'Informação indisponível'}</p>
-      <p>Endereço: {empresa.address}</p>
-      <img src={empresa.logo || '/default-image.jpg'} alt={`${empresa.nome_empresa} logo`} />
+       <main className="flex flex-col justify-normal p-6 space-y-4">
+      <header className="container grid grid-cols-1 md:grid-cols-2 place-items-center mb-24">
+        <section className="flex justify-center mb-4 md:mb-0">
+          <Image
+            src={"/Empresa.jpg"}
+            alt="Empresa"
+            width={300}
+            height={300}
+            className="aspect-video object-cover rounded-lg min-w-fit max-w-2xl"
+          />
+        </section>
+        <section className="space-y-4">
+          <h1 className="font-bold tracking-tighter text-3xl md:text-5xl leading-tight">
+            Sobre a empresa
+          </h1>
+          <p className="text-muted-foreground leading-relaxed ">
+          {empresa.sobre || 'Atualizar Informações!'}
+          </p>
+          <Link href={"/login"} className="flex w-full mt-4">
+            <Button className="w-full">Reservar empresa</Button>
+          </Link>
+        </section>
+      </header>
+      <section className="space-y-4">
+        <h2 className="font-bold tracking-tighter text-3xl md:text-4xl leading-tight text-start md:text-center mb-4">
+          Serviços
+        </h2>
+        <section className="border p-2 px-4 rounded flex items-center gap-4">
+          <section className="flex-1 items-center">
+            <p>Sobrancelha</p>
+          </section>
+          <section>
+            <p className="font-medium">R$15</p>
+            <p className="text-muted-foreground">15min</p>
+          </section>
+          <AgendamentoTrigger>
+            <Button variant={"secondary"}>Reservar</Button>
+          </AgendamentoTrigger>
+        </section>
+        <section className="border p-2 px-4 rounded flex items-center gap-4">
+          <section className="flex-1 items-center">
+            <p>Corte de cabelo</p>
+          </section>
+          <section>
+            <p className="font-medium">R$50</p>
+            <p className="text-muted-foreground">30min</p>
+          </section>
+          <AgendamentoTrigger>
+            <Button variant={"secondary"}>Reservar</Button>
+          </AgendamentoTrigger>
+        </section>
+      </section>
+      <section className="space-y-4">
+        <h2 className="font-bold tracking-tighter text-3xl md:text-4xl leading-tight text-start md:text-center">
+          Veja mais informaçoes sobre essa empresa
+        </h2>
+        <Card className="">
+          <CardHeader className="">
+            <CardTitle>Endereços</CardTitle>
+          </CardHeader>
+          <CardContent className="">
+            <p>{empresa.address}</p>
+          </CardContent>
+        </Card>
+        <Card className="">
+          <CardHeader className="">
+            <CardTitle>Contatos</CardTitle>
+            <CardDescription className="">
+              Contate-nos atraves de suas redes sociais mais utilizadas!
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex gap-4">
+            <p>{empresa.telefone}</p>
+            <p>{empresa.email}</p>
+            <p>{empresa.cnpj}</p>
+          </CardContent>
+        </Card>
+      </section>
+    </main>
     </div>
   );
 }
 
-export default dynamic(() => Promise.resolve(SobreEmpresa), { ssr: false });
+export default SobreEmpresa;

@@ -54,11 +54,7 @@ export default function Header() {
       </Link>
       <nav className="flex gap-5 items-center relative">
         {/* Exibir o botão "Cadastrar Empresa" apenas se o usuário estiver logado */}
-        {isLoggedIn && (
-          <Button variant="outline" onClick={handleButtonClick}>
-            Cadastrar Empresa
-          </Button>
-        )}
+        {isLoggedIn }
 
         <ModeToggle />
 

@@ -11,8 +11,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { PencilIcon } from '@heroicons/react/24/solid';
 
-
-// Função para formatar o número de telefone
 const formatarTelefone = (valor: string) => {
     valor = valor.replace(/\D/g, "");
     if (valor.length <= 11) {

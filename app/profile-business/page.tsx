@@ -1,85 +1,201 @@
-"use client";
-
+'use client'
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
-import { Input } from "@/components/ui/input";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { Card, CardHeader, CardDescription, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Card, CardHeader, CardDescription, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { ResponsiveLine } from "@nivo/line";
+import { toast } from '@/components/ui/use-toast';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+
+interface Profile {
+  id: string;
+  logo?: string; // Assuming 'logo' might be optional
+  sobre?: string;
+  telefone?: string;
+  profile_picture?: string;
+}
+
+interface Agendamento {
+  id: number;
+  cliente: string;
+  email: string;
+  data_hora: string;
+  servico: string;
+}
 
 export default function Page() {
-  return (
+  const [profile, setProfile] = useState<any>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState<'about' | 'contact' | false>(false);
+  const [newAbout, setNewAbout] = useState<string>('');
+  const [newContact, setNewContact] = useState<string>('');
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch('/api/profile-empresa', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setProfile(data);
+          setImagePreview(data.logo);
+          setNewAbout(data.sobre || '');
+          setNewContact(data.telefone || '');
+        } else {
+          toast({ title: data.error || 'Erro ao carregar perfil.' });
+          router.push('/login');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar perfil:', error);
+        toast({ title: 'Erro ao buscar perfil.' });
+      }
+    };
+
+    fetchProfile();
+  }, [router]);
+
+  useEffect(() => {
+    const fetchAgendamentos = async () => {
+      try {
+        const response = await fetch('/api/agendamentos', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setAgendamentos(data);
+        } else {
+          toast({ title: 'Erro ao buscar agendamentos.' });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar agendamentos:', error);
+        toast({ title: 'Erro ao buscar agendamentos.' });
+      }
+    };
+
+    fetchAgendamentos();
+  }, []);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files?.[0]) {
+      const file = event.target.files[0];
+      setSelectedFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    } else {
+      setSelectedFile(null);
+      setImagePreview(null);
+    }
+  };
+
+  const handleImageClick = () => {
+    document.getElementById('fileInput')?.click();
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      toast({ title: 'Nenhum arquivo selecionado.' });
+      return;
+    }
+
+    const confirmUpload = window.confirm('Você tem certeza que deseja atualizar a imagem do perfil?');
+    if (!confirmUpload) return;
+
+    const token = sessionStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('userId', profile?.id);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setProfile((prevProfile: any) => ({
+          ...prevProfile,
+          profile_picture: data.profilePicture,
+        }));
+        sessionStorage.setItem('profilePicture', data.profilePicture);
+        toast({ title: 'Imagem atualizada com sucesso!' });
+        window.location.reload();
+      } else {
+        toast({ title: data.error || 'Erro ao atualizar imagem.' });
+      }
+    } catch (error) {
+      console.error('Erro ao fazer upload da imagem:', error);
+      toast({ title: 'Erro ao fazer upload da imagem.' });
+    }
+  };
+
+  const handleSave = async () => {
+    if (!newAbout.trim()) {
+      toast({ title: 'Por favor, preencha todos os campos.' });
+      return;
+    }
+
+    const token = sessionStorage.getItem('token');
+    const response = await fetch('/api/update-profile', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: profile?.id,
+        about: newAbout,
+        contact: newContact,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      setProfile((prevProfile: any) => ({
+        ...prevProfile,
+        about: newAbout,
+        contact: newContact,
+      }));
+      setIsEditing(false);
+      toast({ title: 'Perfil atualizado com sucesso!' });
+    } else {
+      toast({ title: data.error || 'Erro ao atualizar perfil.' });
+    }
+  };
+
+  return(
     <div className="flex min-h-screen flex-col bg-muted/40">
       <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button size="icon" variant="outline" className="sm:hidden">
-              <span className="sr-only">Toggle Menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="sm:max-w-xs">
-            <nav className="grid gap-6 text-lg font-medium">
-              <Link href="#" className="flex items-center gap-4 px-2.5 text-foreground" prefetch={false}>
-                Dashboard
-              </Link>
-              <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" prefetch={false}>
-                Orders
-              </Link>
-              <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" prefetch={false}>
-                Customers
-              </Link>
-              <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" prefetch={false}>
-                Finances
-              </Link>
-              <Link href="#" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground" prefetch={false}>
-                Analytics
-              </Link>
-            </nav>
-          </SheetContent>
-        </Sheet>
-        <Breadcrumb className="hidden md:flex">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href="#" prefetch={false}>
-                  Dashboard
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="overflow-hidden rounded-full ml-auto">
-              {/* Placeholder para avatar */}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <Link href="/config-bussines">
-            <DropdownMenuItem>Configuração</DropdownMenuItem>
-            </Link>
-            <DropdownMenuItem>Suporte</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Sair</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Link href="/config-bussines  ">
+    <Button variant="outline" size="icon"></Button>
+      </Link>
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total de Clientes</CardDescription>
               <CardTitle className="text-4xl">12,345</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-xs text-muted-foreground">+5% do Ultimo mês</div>
+              <div className="text-xs text-muted-foreground">+5% do Último mês</div>
             </CardContent>
             <CardFooter>
               <Progress value={25} aria-label="25% increase" />
@@ -88,10 +204,10 @@ export default function Page() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total de Vendas</CardDescription>
-              <CardTitle className="text-4xl">R$456,789</CardTitle>
+              <CardTitle className="text-4xl">R$71,50</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-xs text-muted-foreground">+10% do Ultimo mês</div>
+              <div className="text-xs text-muted-foreground">+10% do Último mês</div>
             </CardContent>
             <CardFooter>
               <Progress value={12} aria-label="12% increase" />
@@ -103,7 +219,7 @@ export default function Page() {
               <CardTitle className="text-4xl">53</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-xs text-muted-foreground">+20% do Ultimo mês</div>
+              <div className="text-xs text-muted-foreground">+20% do Último mês</div>
             </CardContent>
             <CardFooter>
               <Progress value={20} aria-label="20% increase" />
@@ -135,30 +251,16 @@ export default function Page() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow>
-                    <TableCell>
-                      <div className="font-medium">Luis Miguel</div>
-                      <div className="text-sm text-muted-foreground">luismiguel@example.com</div>
-                    </TableCell>
-                    <TableCell>06/10/2024</TableCell>
-                    <TableCell>10:00 AM</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div className="font-medium">Isac Antonio</div>
-                      <div className="text-sm text-muted-foreground">IsacAntonio@gmail.com</div>
-                    </TableCell>
-                    <TableCell>06/10/2024</TableCell>
-                    <TableCell>11:00 AM</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div className="font-medium">Alex</div>
-                      <div className="text-sm text-muted-foreground">Alex@example.com</div>
-                    </TableCell>
-                    <TableCell>06/10/2024</TableCell>
-                    <TableCell>01:00 PM</TableCell>
-                  </TableRow>
+                  {agendamentos.map((agendamento) => (
+                    <TableRow key={agendamento.id}>
+                      <TableCell>
+                        <div className="font-medium">{agendamento.cliente}</div>
+                        <div className="text-sm text-muted-foreground">{agendamento.email}</div>
+                      </TableCell>
+                      <TableCell>{new Date(agendamento.data_hora).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(agendamento.data_hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </CardContent>
@@ -183,23 +285,19 @@ export function SalesChart(props: SalesChartProps) {
           {
             id: "Desktop",
             data: [
-              { x: "Jan", y: 43 },
-              { x: "Feb", y: 137 },
-              { x: "Mar", y: 61 },
-              { x: "Apr", y: 145 },
-              { x: "May", y: 26 },
-              { x: "Jun", y: 154 },
+              { x: "Setembro", y: 21 },
+              { x: "Outubro", y: 1 },
+              { x: "Novembro", y: 11 },
+              { x: "Dezembro", y: 13 },
             ],
           },
           {
             id: "Mobile",
             data: [
-              { x: "Jan", y: 60 },
-              { x: "Feb", y: 48 },
-              { x: "Mar", y: 177 },
-              { x: "Apr", y: 78 },
-              { x: "May", y: 96 },
-              { x: "Jun", y: 204 },
+              { x: "Setembro", y: 10 },
+              { x: "Outubro", y: 2},
+              { x: "Novembro", y: 1 },
+              { x: "Dezembro", y: 12 },
             ],
           },
         ]}

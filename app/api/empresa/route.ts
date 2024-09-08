@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '../../../lib/db';  // Ajuste o caminho conforme necessário
+import { query } from '../../../lib/db';  
 
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    const id = url.searchParams.get('id');  // Obtém o ID da URL
+    const id = url.searchParams.get('id'); 
 
     if (!id) {
       return NextResponse.json({ error: 'ID não fornecido.' }, { status: 400 });

@@ -81,7 +81,7 @@ export default function Login() {
           </Button>
         </form>
         <section className="flex flex-col gap-2 justify-center mt-4">
-          <Link href="/business">
+          <Link href="/login/business">
             <Button variant="secondary" className="w-full">
               Entrar com uma conta empresarial
             </Button>

@@ -1,4 +1,5 @@
 'use client'
+
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -41,13 +42,18 @@ export default function Page() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+           const token_empresa = sessionStorage.getItem('token_empresa'); 
+        
         const response = await fetch('/api/profile-empresa', {
           method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token_empresa}`,
+          },
           credentials: 'include',
         });
-
+    
         const data = await response.json();
-
+    
         if (response.ok) {
           setProfile(data);
           setImagePreview(data.logo);
@@ -114,7 +120,7 @@ export default function Page() {
     const confirmUpload = window.confirm('Você tem certeza que deseja atualizar a imagem do perfil?');
     if (!confirmUpload) return;
 
-    const token = sessionStorage.getItem('token');
+       const token_empresa = sessionStorage.getItem('token_empresa');
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('userId', profile?.id);
@@ -122,7 +128,7 @@ export default function Page() {
     try {
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {  'Authorization': `Bearer ${token_empresa}` },
         body: formData,
       });
 
@@ -151,11 +157,11 @@ export default function Page() {
       return;
     }
 
-    const token = sessionStorage.getItem('token');
+       const token_empresa = sessionStorage.getItem('token_empresa');
     const response = await fetch('/api/update-profile', {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${token_empresa}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -186,9 +192,6 @@ export default function Page() {
       </header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Link href="/config-bussines  ">
-    <Button variant="outline" size="icon"></Button>
-      </Link>
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total de Clientes</CardDescription>
@@ -286,18 +289,18 @@ export function SalesChart(props: SalesChartProps) {
             id: "Desktop",
             data: [
               { x: "Setembro", y: 21 },
-              { x: "Outubro", y: 1 },
-              { x: "Novembro", y: 11 },
-              { x: "Dezembro", y: 13 },
+              { x: "Outubro", y: 11 },
+              { x: "Novembro", y: 31 },
+              { x: "Dezembro", y: 44 },
             ],
           },
           {
             id: "Mobile",
             data: [
-              { x: "Setembro", y: 10 },
-              { x: "Outubro", y: 2},
-              { x: "Novembro", y: 1 },
-              { x: "Dezembro", y: 12 },
+              { x: "Setembro", y: 11 },
+              { x: "Outubro", y: 22},
+              { x: "Novembro", y: 31 },
+              { x: "Dezembro", y: 42 },
             ],
           },
         ]}

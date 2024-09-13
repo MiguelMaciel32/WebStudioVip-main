@@ -5,32 +5,44 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';  
 import { ModeToggle } from './ui/mode-toggle'; 
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuIndicator,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  NavigationMenuViewport,
-} from "@/components/ui/navigation-menu";
-import CadastrarEmpresaModal from '@/components/empresa';
 import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isLoggedInEmpresa, setIsLoggedInEmpresa] = useState<boolean>(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const template = 'https://cdn.discordapp.com/attachments/1280686220711559180/1280687206742360215/logo_sv.png?ex=66d8fc68&is=66d7aae8&hm=663c516f4dc2c83dfcbf08e6ceee7bcf29f25e773e76a3b353c15c504495c824&';
+
   
+  const templateClient = '../public/foto.jpg'; 
+  const templateBusiness = '../public/foto.jpg';
+
   const router = useRouter();
 
   useEffect(() => {
     const token = sessionStorage.getItem('token');
+    const token_empresa = sessionStorage.getItem('token_empresa');
     const savedProfilePicture = sessionStorage.getItem('profilePicture');
+    const savedProfileBusiness = sessionStorage.getItem('profileBusiness');
 
-    setIsLoggedIn(!!token);
-    setProfilePicture(savedProfilePicture || template);
+   
+    if (token && !token_empresa) {
+      setIsLoggedIn(true);
+      setIsLoggedInEmpresa(false); 
+      setProfilePicture(savedProfilePicture || templateClient);
+    }
+
+    if (token_empresa && !token) {
+      setIsLoggedInEmpresa(true);
+      setIsLoggedIn(false); 
+      setProfilePicture(savedProfileBusiness || templateBusiness);
+    }
+
+    
+    if (token && token_empresa) {
+      setIsLoggedInEmpresa(true);
+      setIsLoggedIn(false);
+      setProfilePicture(savedProfileBusiness || templateBusiness);
+    }
   }, []);
 
   const handleLogout = () => {
@@ -41,8 +53,12 @@ export default function Header() {
     window.location.reload();
   };
 
-  const handleButtonClick = () => {
-    router.push('/cadastraempresa'); // Redireciona para a página de perfil
+  const handleLogoutEmpresa = () => {
+    sessionStorage.removeItem('token_empresa');
+    sessionStorage.removeItem('profileBusiness');
+    setIsLoggedInEmpresa(false);
+    setProfilePicture(null);
+    window.location.reload();
   };
 
   return (
@@ -53,17 +69,19 @@ export default function Header() {
         </h1>
       </Link>
       <nav className="flex gap-5 items-center relative">
-        {/* Exibir o botão "Cadastrar Empresa" apenas se o usuário estiver logado */}
-        {isLoggedIn }
+        {/* Exibir o botão "Cadastrar Empresa" apenas se o usuário estiver logado como empresa */}
+        {isLoggedInEmpresa && (
+          <Button variant="outline">Cadastrar Empresa</Button>
+        )}
 
         <ModeToggle />
 
         <div className="flex items-center gap-2 relative">
-          {isLoggedIn ? (
+          {isLoggedIn || isLoggedInEmpresa ? (
             <div className="relative group">
               <div className="cursor-pointer">
                 <Image
-                  src={profilePicture || ''}
+                  src={profilePicture || templateClient} 
                   alt="Profile"
                   width={40}
                   height={40}
@@ -73,13 +91,13 @@ export default function Header() {
               <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <ul className="flex flex-col p-2">
                   <li className="p-2 hover:bg-gray-100">
-                    <Link className='text-escuro' href="/profile">
+                    <Link className='text-escuro' href={isLoggedInEmpresa ? "/config-profile" : "/profile"}>
                       Perfil
                     </Link>
                   </li>
                   <li className="p-2 hover:bg-gray-100">
                     <button
-                      onClick={handleLogout}
+                      onClick={isLoggedInEmpresa ? handleLogoutEmpresa : handleLogout}
                       className="w-full text-left text-escuro"
                     >
                       Sair da conta

@@ -5,7 +5,7 @@ import { query } from '../../../lib/db'; // Ajuste o caminho de acordo com sua e
 export async function GET() {
   try {
     const agendamentos = await query(`
-      SELECT a.id, a.data_hora, a.servico, u.username as cliente, u.contact as email
+      SELECT a.id, a.data_hora, a.servico, u.name as cliente, u.contact as email
       FROM agendamentos a
       JOIN users u ON a.user_id = u.id
       ORDER BY a.data_hora DESC

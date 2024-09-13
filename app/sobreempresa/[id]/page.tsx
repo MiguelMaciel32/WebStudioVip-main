@@ -1,4 +1,4 @@
-'use client';
+'use client'
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import AgendamentoTrigger from "@/components/AgendamentoTrigger";
@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import Image from "next/image";
 
-// Interface que define o formato dos dados da empresa
 interface Empresa {
   id: number;
   nome_empresa: string;
@@ -24,16 +23,26 @@ interface Empresa {
   logo: string | null;
 }
 
-// Componente da página sobre a empresa
+interface Servico {
+  id: number;
+  nome: string;
+  preco: number;
+  duracao: string;
+}
+
 function SobreEmpresa() {
   const { id } = useParams();
   const [empresa, setEmpresa] = useState<Empresa | null>(null);
+  const [servicos, setServicos] = useState<Servico[]>([]);
 
   useEffect(() => {
     if (id) {
       fetch(`/api/empresa?id=${id}`)
         .then((response) => response.json())
-        .then((data) => setEmpresa(data))
+        .then((data) => {
+          setEmpresa(data.empresa);
+          setServicos(data.servicos || []);
+        })
         .catch((error) => console.error('Erro ao buscar empresa:', error));
     }
   }, [id]);
@@ -48,8 +57,8 @@ function SobreEmpresa() {
         <header className="container grid grid-cols-1 md:grid-cols-2 place-items-center mb-24">
           <section className="flex justify-center mb-4 md:mb-0">
             <Image
-              src={"/Empresa.jpg"}
-              alt="Empresa"
+              src={empresa.logo || "/Empresa.jpg"}
+              alt={empresa.nome_empresa}
               width={300}
               height={300}
               className="aspect-video object-cover rounded-lg min-w-fit max-w-2xl"
@@ -59,7 +68,7 @@ function SobreEmpresa() {
             <h1 className="font-bold tracking-tighter text-3xl md:text-5xl leading-tight">
               Sobre a empresa
             </h1>
-            <p className="text-muted-foreground leading-relaxed ">
+            <p className="text-muted-foreground leading-relaxed">
               {empresa.sobre || 'Atualizar Informações!'}
             </p>
           </section>
@@ -70,34 +79,25 @@ function SobreEmpresa() {
           <h2 className="font-bold tracking-tighter text-3xl md:text-4xl leading-tight text-start md:text-center mb-4">
             Serviços
           </h2>
-          
-          {/* Card de Serviço Sobrancelha */}
-          <section className="border p-2 px-4 rounded flex items-center gap-4">
-            <section className="flex-1 items-center">
-              <p>Sobrancelha</p>
-            </section>
-            <section>
-              <p className="font-medium">R$15</p>
-              <p className="text-muted-foreground">15min</p>
-            </section>
-            <AgendamentoTrigger empresaId={empresa.id} servico="Sobrancelha">
-              <Button variant={"secondary"}>Reservar</Button>
-            </AgendamentoTrigger>
-          </section>
 
-          {/* Card de Serviço Corte de cabelo */}
-          <section className="border p-2 px-4 rounded flex items-center gap-4">
-            <section className="flex-1 items-center">
-              <p>Corte de cabelo</p>
+          {servicos.map((servico) => (
+            <section key={servico.id} className="border p-2 px-4 rounded flex items-center gap-4">
+              <section className="flex-1 items-center">
+                <p>{servico.nome}</p>
+              </section>
+              <section>
+                <p className="font-medium">R${servico.preco}</p>
+                <p className="text-muted-foreground">{servico.duracao}</p>
+              </section>
+              <AgendamentoTrigger
+                empresaId={empresa.id}
+                servico={servico.nome}
+                precoServico={servico.preco}
+              >
+                <Button variant={"secondary"}>Reservar</Button>
+              </AgendamentoTrigger>
             </section>
-            <section>
-              <p className="font-medium">R$50</p>
-              <p className="text-muted-foreground">30min</p>
-            </section>
-            <AgendamentoTrigger empresaId={empresa.id} servico="Corte de Cabelo">
-              <Button variant={"secondary"}>Reservar</Button>
-            </AgendamentoTrigger>
-          </section>
+          ))}
         </section>
 
         {/* Informações adicionais sobre a empresa */}

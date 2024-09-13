@@ -1,9 +1,7 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetHeader, SheetTitle, SheetDescription, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import React, { useState } from "react";
 import { useToast } from "./ui/use-toast";
 
@@ -11,67 +9,94 @@ export default function AgendamentoTrigger({
   children,
   empresaId,
   servico,
+  precoServico,
 }: {
   children: React.ReactNode;
-  empresaId: number; // Recebe o ID da empresa
-  servico: string;   // Recebe o nome do serviço
+  empresaId: number;
+  servico: string;
+  precoServico: number;
 }) {
   const [name, setName] = useState('');
   const [telefone, setTelefone] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Validação dos campos de forma mais direta
   const camposPreenchidos = () => {
-    return name && telefone && date && time; // Verificação simples
+    return name && telefone && date && time;
   };
 
-  const handleSubmit = async () => {
-    // Log dos valores antes da validação
-    console.log('Nome:', name, 'Telefone:', telefone, 'Data:', date, 'Hora:', time);
-
-    // Verifica se os campos obrigatórios estão preenchidos corretamente
+  const handleGeneratePayment = async () => {
     if (!camposPreenchidos()) {
       toast({ title: "Por favor, preencha todos os campos.", variant: "destructive" });
       return;
     }
 
-    // Combina a data e a hora no formato correto
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      toast({ title: "Você precisa estar logado para realizar o agendamento.", variant: "destructive" });
+      return;
+    }
+
     const dataHora = `${date}T${time}:00`;
 
-    const userId = 1; // Substitua pelo ID real do usuário autenticado.
-
-    // Dados do agendamento
-    const agendamento = {
-      empresa_id: empresaId,
-      user_id: userId,
-      data_hora: dataHora,
-      servico: servico,
-      nome: name,
-      telefone: telefone,
-    };
-
-    console.log('Enviando agendamento:', agendamento);
-
     try {
-      // Enviando dados para a API de agendamento
-      const response = await fetch('/api/agendar', {
+      const response = await fetch('/api/create-preference', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, 
         },
-        body: JSON.stringify(agendamento),
+        body: JSON.stringify({
+          description: servico,
+          price: precoServico,
+          quantity: 1,
+          empresaId: empresaId,
+          servico: servico
+        }),
       });
 
       const data = await response.json();
 
+      if (response.ok && data.id) {
+        setPaymentUrl(`https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=${data.id}`);
+        toast({ title: "Pagamento gerado com sucesso!" });
+
+        
+        await handleAgendar(dataHora, token);
+      } else {
+        toast({ title: `Erro: ${data.error}`, variant: "destructive" });
+      }
+    } catch (error) {
+      console.error('Erro ao gerar o pagamento:', error);
+      toast({ title: "Erro ao gerar o pagamento.", variant: "destructive" });
+    }
+  };
+
+  const handleAgendar = async (dataHora: string, token: string) => {
+    try {
+      const response = await fetch('/api/agendar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          empresa_id: empresaId,
+          user_id: 1,
+          data_hora: dataHora,
+          servico: servico,
+          nome: name,
+          telefone: telefone,
+        }),
+      });
+
+      const data = await response.json();
       if (response.ok) {
-        console.log('Agendamento realizado com sucesso:', data);
         toast({ title: "Agendamento realizado com sucesso!" });
       } else {
-        console.log('Erro na API:', data);
-        toast({ title: `Erro: ${data.error}`, variant: "destructive" });
+        toast({ title: `Erro no agendamento: ${data.error}`, variant: "destructive" });
       }
     } catch (error) {
       console.error('Erro ao realizar o agendamento:', error);
@@ -86,13 +111,10 @@ export default function AgendamentoTrigger({
         <SheetHeader>
           <SheetTitle>Agendamento</SheetTitle>
           <SheetDescription>
-            Preencha o formulário abaixo para escolher uma data e horário
-            conveniente para sua consulta. Garantimos um atendimento rápido e
-            eficiente.
+            Preencha o formulário abaixo para gerar o pagamento via Mercado Pago. Após o pagamento, o agendamento será confirmado.
           </SheetDescription>
         </SheetHeader>
         <section className="grid gap-4 py-4">
-          {/* Nome do cliente */}
           <section className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
               Nome
@@ -100,7 +122,7 @@ export default function AgendamentoTrigger({
             <Input
               id="name"
               className="col-span-3"
-              placeholder="John Doe"
+              placeholder="Luis Miguel"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -108,7 +130,6 @@ export default function AgendamentoTrigger({
             />
           </section>
 
-          {/* Telefone do cliente */}
           <section className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="tel" className="text-right">
               Telefone
@@ -124,7 +145,6 @@ export default function AgendamentoTrigger({
             />
           </section>
 
-          {/* Data do agendamento */}
           <section className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="date" className="text-right">
               Data
@@ -139,7 +159,6 @@ export default function AgendamentoTrigger({
             />
           </section>
 
-          {/* Hora do agendamento */}
           <section className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="time" className="text-right">
               Horário
@@ -155,17 +174,15 @@ export default function AgendamentoTrigger({
           </section>
         </section>
 
-        <SheetFooter>
-          <SheetClose asChild>
-            <Button
-              type="button"
-              className="w-full"
-              onClick={handleSubmit}
-            >
-              Agendar
-            </Button>
-          </SheetClose>
-        </SheetFooter>
+        <div className="py-4">
+          {!paymentUrl ? (
+            <Button onClick={handleGeneratePayment}>Gerar Pagamento</Button>
+          ) : (
+            <a href={paymentUrl} target="_blank" rel="noopener noreferrer">
+              <Button>Ir para o Pagamento</Button>
+            </a>
+          )}
+        </div>
       </SheetContent>
     </Sheet>
   );

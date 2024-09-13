@@ -10,16 +10,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'ID não fornecido.' }, { status: 400 });
     }
 
-    const results = await query(
+    // Buscar informações da empresa
+    const empresa = await query(
       'SELECT id, nome_empresa, email, cnpj, telefone, sobre, address, logo FROM empresas WHERE id = ?',
       [id]
     );
 
-    if (results.length === 0) {
+    if (empresa.length === 0) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 });
     }
 
-    return NextResponse.json(results[0], { status: 200 });
+    // Buscar serviços associados à empresa
+    const servicos = await query(
+      'SELECT id, nome, preco, duracao FROM servicos WHERE empresa_id = ?',
+      [id]
+    );
+
+    // Retornar as informações da empresa e os serviços
+    return NextResponse.json({ empresa: empresa[0], servicos }, { status: 200 });
   } catch (error) {
     console.error('Erro ao buscar empresa:', error);
     return NextResponse.json({ error: 'Erro ao buscar empresa.' }, { status: 500 });

@@ -59,6 +59,7 @@
     "express": "^4.19.2",
     "face-api.js": "^0.20.0",
     "formidable": "^3.5.1",
+    "framer-motion": "^11.5.4",
     "git": "^0.1.5",
     "input-otp": "^1.2.4",
     "jsonwebtoken": "^9.0.2",

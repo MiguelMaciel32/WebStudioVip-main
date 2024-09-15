@@ -18,7 +18,7 @@ export default function BusinessCadastro() {
   const [address, setAddress] = useState<string>("");
   const router = useRouter();
 
-  // Função para validar o CNPJ
+  
   const validarCNPJ = (cnpj: string): boolean => {
     cnpj = cnpj.replace(/[^\d]+/g, "");
 
@@ -75,7 +75,7 @@ export default function BusinessCadastro() {
     setTelefone(formattedTelefone);
   };
 
-  // Função para cadastrar a empresa
+  
   const cadastrarEmpresa = async (e: FormEvent) => {
     e.preventDefault();
 

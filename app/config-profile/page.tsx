@@ -273,32 +273,36 @@ export default function ConfigurarEmpresa() {
           <Button onClick={adicionarServico} className="mt-4">Adicionar Serviço</Button>
         </CardContent>
       </Card>
-
+      
+      
       <Card>
-        <CardHeader>
-          <CardTitle>Serviços Cadastrados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {servicos.length === 0 ? (
-            <p>Nenhum serviço cadastrado.</p>
-          ) : (
-            <ul className="space-y-2">
-              {servicos.map((servico, index) => (
-                <li key={index} className="flex items-center justify-between bg-muted p-2 rounded">
-                  <span>{servico.nome}</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="flex items-center"><DollarSign className="w-4 h-4 mr-1" />R$ {servico.preco}</span>
-                    <span className="flex items-center"><Clock className="w-4 h-4 mr-1" />{servico.duracao}</span>
-                    <Button variant="destructive" size="icon" onClick={() => removerServico(index)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+  <CardHeader>
+    <CardTitle>Serviços Cadastrados</CardTitle>
+  </CardHeader>
+  <CardContent>
+    {servicos.length === 0 ? (
+      <p>Nenhum serviço cadastrado.</p>
+    ) : (
+      <div className="flex flex-wrap gap-4">
+        {servicos.map((servico, index) => (
+          <Card key={index} className="w-full max-w-sm">
+            <CardContent className="p-6 flex justify-between items-center">
+              <div className="space-y-1">
+                <h3 className="font-semibold text-lg">{servico.nome}</h3>
+                <p className="text-sm text-muted-foreground">Valor: R$ {servico.preco}</p>
+                <p className="text-sm text-muted-foreground">{servico.duracao} min</p>
+              </div>
+              <Button variant="destructive" size="icon" onClick={() => removerServico(index)} aria-label="Deletar serviço">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )}
+  </CardContent>
+</Card>
+
     </div>
   );
 }

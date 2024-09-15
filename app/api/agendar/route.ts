@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '../../../lib/db';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = 'luismiguel'; // O mesmo usado na geração do token
+const JWT_SECRET = 'luismiguel'; // Cliente só
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.split(' ')[1]; // O token virá no formato "Bearer <token>"
+    // Handle token authentication
+    const token = req.headers.get('Authorization')?.split(' ')[1]; 
     
     if (!token) {
       return NextResponse.json({ error: 'Acesso negado. Token não fornecido.' }, { status: 401 });
@@ -20,8 +21,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Token inválido ou expirado.' }, { status: 403 });
     }
 
+    // Handle agendamento logic
     const body = await req.json();
     const { empresa_id, data_hora, servico, nome, telefone } = body;
+
+    if (!empresa_id || !data_hora || !servico || !nome || !telefone) {
+      return NextResponse.json({ error: 'Campos obrigatórios ausentes' }, { status: 400 });
+    }
 
     const agendamentoData = new Date(data_hora);
     const dataAtual = new Date();
@@ -39,13 +45,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Este horário já está ocupado.' }, { status: 409 });
     }
 
-    // Cria o agendamento
+    // Create agendamento
     const result = await query(
       'INSERT INTO agendamentos (empresa_id, user_id, data_hora, servico, nome, telefone) VALUES (?, ?, ?, ?, ?, ?)',
       [empresa_id, userId, data_hora, servico, nome, telefone]
     );
 
     return NextResponse.json({ message: 'Agendamento realizado com sucesso!', result }, { status: 201 });
+
   } catch (error) {
     console.error('Erro ao processar o agendamento:', error);
     return NextResponse.json({ error: 'Erro ao processar o agendamento.' }, { status: 500 });

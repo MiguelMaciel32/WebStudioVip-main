@@ -1,54 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { query } from '../../../lib/db';
+import mercadopago from 'mercadopago';
 
-export async function GET(req: NextRequest) {
+mercadopago.configure({
+  access_token: process.env.MERCADOPAGO_ACCESS_TOKEN2 || '', 
+});
+
+type Data = {
+  id?: string;
+  error?: string;
+};
+
+export async function POST(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const paymentId = searchParams.get('payment_id');
-    const status = searchParams.get('status');
-    const empresaId = searchParams.get('empresaId');
-    const servico = searchParams.get('servico');
+    // Extrair os detalhes do agendamento do corpo da requisição
+    const { description, price, quantity, empresaId, servico, data_hora, nome, telefone } = await req.json();
 
-    // Verificar se os parâmetros essenciais estão presentes
-    if (!paymentId || !status || !empresaId || !servico) {
-      return NextResponse.json(
-        { error: 'Informações insuficientes no feedback do pagamento.' },
-        { status: 400 }
-      );
+    // Validar os campos necessários
+    if (!description || !price || !quantity || !empresaId || !servico || !data_hora || !nome || !telefone) {
+      return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
 
-    // Aqui você pode fazer alguma lógica baseada no status do pagamento
-    if (status === 'approved') {
-      // Caso o pagamento tenha sido aprovado, você pode confirmar o agendamento ou realizar qualquer outro processo
-      // Você pode retornar detalhes adicionais, como o ID do pagamento
-      return NextResponse.json({
-        message: 'Pagamento aprovado e agendamento confirmado!',
-        paymentId: paymentId,
-        servico: servico,
-        empresaId: empresaId,
-      }, { status: 200 });
-    } else if (status === 'pending') {
-      return NextResponse.json({
-        message: 'Pagamento pendente. Aguardando confirmação.',
-        paymentId: paymentId,
-        status: status,
-      }, { status: 202 });
-    } else if (status === 'rejected') {
-      return NextResponse.json({
-        message: 'Pagamento rejeitado. Tente novamente.',
-        paymentId: paymentId,
-        status: status,
-      }, { status: 400 });
-    } else {
-      return NextResponse.json({
-        error: 'Status de pagamento desconhecido.',
-        status: status,
-      }, { status: 400 });
-    }
+    // Configurar a preferência de pagamento
+    const preference = {
+      items: [
+        {
+          title: description,
+          unit_price: Number(price),
+          quantity: Math.floor(Number(quantity)), // Garantir que a quantidade seja um inteiro
+        },
+      ],
+      back_urls: {
+        success: `${req.headers.get('origin')}/api/statuspagamento?pagamento_id=${Date.now()}&status=approved`,
+        failure: `${req.headers.get('origin')}/api/statuspagamento?pagamento_id=${Date.now()}&status=rejected`,
+        pending: `${req.headers.get('origin')}/api/statuspagamento?pagamento_id=${Date.now()}&status=pending`,
+      },
+      auto_return: 'approved' as 'approved',
+      external_reference: `${Date.now()}`, // Adicionar um identificador único para referência
+    };
+
+    // Criação da preferência de pagamento
+    const response = await mercadopago.preferences.create(preference);
+
+    // Armazenar detalhes do agendamento no banco de dados com o pagamento_id gerado
+    await query('INSERT INTO agendamentos_pending (pagamento_id, empresa_id, servico, data_hora, nome, telefone) VALUES (?, ?, ?, ?, ?, ?)', [
+      response.body.id, // Utilizar o id da preferência como pagamento_id
+      empresaId,
+      servico,
+      data_hora,
+      nome,
+      telefone
+    ]);
+
+    // Retornar a resposta com o ID da preferência
+    return NextResponse.json({ id: response.body.id });
   } catch (error) {
-    console.error('Erro ao processar o feedback do pagamento:', error);
-    return NextResponse.json(
-      { error: 'Erro ao processar o feedback do pagamento.' },
-      { status: 500 }
-    );
+    console.error('Erro ao criar preferência:', error);
+    return NextResponse.json({ error: 'Erro ao criar preferência.' }, { status: 500 });
   }
 }

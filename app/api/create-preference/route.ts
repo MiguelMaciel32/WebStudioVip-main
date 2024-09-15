@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mercadopago from 'mercadopago';
 
-// Configuração do MercadoPago
 mercadopago.configure({
-  access_token: process.env.MERCADOPAGO_ACCESS_TOKEN || '', // Substitua pelo seu token
+  access_token: process.env.MERCADOPAGO_ACCESS_TOKEN2 || '', 
 });
 
 type Data = {
@@ -15,7 +14,7 @@ export async function POST(req: NextRequest) {
   try {
     const { description, price, quantity, empresaId, servico } = await req.json();
 
-    // Validação básica dos parâmetros
+
     if (!description || !price || !quantity || !empresaId || !servico) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }

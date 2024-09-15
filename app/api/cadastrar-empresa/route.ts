@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 
-// Função para validar o CNPJ
-const validarCNPJ = (cnpj: string): boolean => {
-    cnpj = cnpj.replace(/[^\d]+/g, ""); // Remove caracteres não numéricos
 
-    if (cnpj.length !== 14) return false; // Verifica se o CNPJ tem 14 dígitos
+const validarCNPJ = (cnpj: string): boolean => {
+    cnpj = cnpj.replace(/[^\d]+/g, "");
+
+    if (cnpj.length !== 14) return false; 
 
     let soma = 0;
     let pos = 5;
@@ -32,32 +32,31 @@ const validarCNPJ = (cnpj: string): boolean => {
     return true;
 };
 
-// Função para validar o telefone
+
 const validarTelefone = (telefone: string): boolean => {
     telefone = telefone.replace(/\D/g, ''); 
-    return telefone.length === 11; // Verifica se o telefone tem 11 dígitos
+    return telefone.length === 11; 
 };
 
 export async function POST(request: NextRequest) {
     const { nomeEmpresa, cnpj, email, telefone, senha, address } = await request.json();
 
-    // Verifica se todos os campos foram preenchidos
+
     if (!nomeEmpresa || !cnpj || !email || !telefone || !senha || !address) {
         return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 });
     }
 
-    // Valida o CNPJ
+ 
     if (!validarCNPJ(cnpj)) {
         return NextResponse.json({ error: 'CNPJ inválido.' }, { status: 400 });
     }
 
-    // Valida o telefone
+
     if (!validarTelefone(telefone)) {
         return NextResponse.json({ error: 'Número de telefone inválido.' }, { status: 400 });
     }
 
     try {
-        // Insere os dados na tabela de empresas
         const result = await query(`
           INSERT INTO empresas (nome_empresa, cnpj, email, telefone, senha, address)
           VALUES (?, ?, ?, ?, ?, ?)

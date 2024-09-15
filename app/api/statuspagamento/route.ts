@@ -3,23 +3,24 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-    const pagamento_id = url.searchParams.get('pagamento_id');
+    const empresaId = url.searchParams.get('empresaId');
+    const servico = url.searchParams.get('servico');
+    const collection_id = url.searchParams.get('collection_id');
+    const collection_status = url.searchParams.get('collection_status');
+    const payment_id = url.searchParams.get('payment_id');
     const status = url.searchParams.get('status');
 
-    if (!pagamento_id || !status) {
+    if (!empresaId || !servico || !collection_id || !collection_status || !payment_id || !status) {
       return NextResponse.json({ error: 'Parâmetros inválidos.' }, { status: 400 });
     }
 
-    // Redirecionar para a página de sucesso, erro ou pendente com base no status
     const redirectUrl = status === 'approved'
-      ? `/successpay?pagamento_id=${pagamento_id}`
-      : status === 'rejected'
-      ? `/erropay?pagamento_id=${pagamento_id}`
-      : `/pendente?pagamento_id=${pagamento_id}`;
+      ? `/successpay?pagamento_id=${payment_id}`
+      : `/erropay?pagamento_id=${payment_id}`;
 
-    return NextResponse.redirect(new URL(redirectUrl, req.url));
+    return NextResponse.redirect(new URL(redirectUrl, req.url).href);
   } catch (error) {
-    console.error('Erro ao processar o pagamento:', error);
-    return NextResponse.json({ error: 'Erro ao processar o pagamento.' }, { status: 500 });
+    console.error('Erro ao processar a requisição:', error);
+    return NextResponse.json({ error: 'Erro ao processar a requisição.' }, { status: 500 });
   }
 }

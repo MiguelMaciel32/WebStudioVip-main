@@ -11,51 +11,82 @@ type Data = {
   error?: string;
 };
 
+function convertISOToMySQLDate(isoDate: string): string {
+  const date = new Date(isoDate);
+  return date.toISOString().replace('T', ' ').split('.')[0];
+}
+
+// Função para lidar com POST
 export async function POST(req: NextRequest) {
   try {
-    // Extrair os detalhes do agendamento do corpo da requisição
     const { description, price, quantity, empresaId, servico, data_hora, nome, telefone } = await req.json();
 
-    // Validar os campos necessários
     if (!description || !price || !quantity || !empresaId || !servico || !data_hora || !nome || !telefone) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
 
-    // Configurar a preferência de pagamento
+    const formattedDate = convertISOToMySQLDate(data_hora);
+
     const preference = {
       items: [
         {
           title: description,
           unit_price: Number(price),
-          quantity: Math.floor(Number(quantity)), // Garantir que a quantidade seja um inteiro
+          quantity: Math.floor(Number(quantity)),
         },
       ],
       back_urls: {
-        success: `${req.headers.get('origin')}/api/statuspagamento?pagamento_id=${Date.now()}&status=approved`,
-        failure: `${req.headers.get('origin')}/api/statuspagamento?pagamento_id=${Date.now()}&status=rejected`,
-        pending: `${req.headers.get('origin')}/api/statuspagamento?pagamento_id=${Date.now()}&status=pending`,
+        success: `${req.headers.get('origin')}/successpay?status=approved`,
+        failure: `${req.headers.get('origin')}/erropay?status=rejected`,
+        pending: `${req.headers.get('origin')}/pendente?status=pending`,
       },
       auto_return: 'approved' as 'approved',
-      external_reference: `${Date.now()}`, // Adicionar um identificador único para referência
+      external_reference: '', // Inicialmente vazio, será preenchido após criação da preferência
     };
 
-    // Criação da preferência de pagamento
     const response = await mercadopago.preferences.create(preference);
 
-    // Armazenar detalhes do agendamento no banco de dados com o pagamento_id gerado
+    preference.external_reference = response.body.id;
+
     await query('INSERT INTO agendamentos_pending (pagamento_id, empresa_id, servico, data_hora, nome, telefone) VALUES (?, ?, ?, ?, ?, ?)', [
-      response.body.id, // Utilizar o id da preferência como pagamento_id
+      response.body.id, 
       empresaId,
       servico,
-      data_hora,
+      formattedDate,
       nome,
       telefone
     ]);
 
-    // Retornar a resposta com o ID da preferência
     return NextResponse.json({ id: response.body.id });
   } catch (error) {
     console.error('Erro ao criar preferência:', error);
     return NextResponse.json({ error: 'Erro ao criar preferência.' }, { status: 500 });
+  }
+}
+
+// Função para lidar com GET
+export async function GET(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const empresaId = url.searchParams.get('empresaId');
+    const servico = url.searchParams.get('servico');
+    const collection_id = url.searchParams.get('collection_id');
+    const collection_status = url.searchParams.get('collection_status');
+    const payment_id = url.searchParams.get('payment_id');
+    const status = url.searchParams.get('status');
+
+    if (!empresaId || !servico || !collection_id || !collection_status || !payment_id || !status) {
+      return NextResponse.json({ error: 'Parâmetros inválidos.' }, { status: 400 });
+    }
+
+    // Processar o status do pagamento
+    const redirectUrl = status === 'approved'
+      ? `/suce?pagamento_id=${payment_id}`
+      : `/erro?pagamento_id=${payment_id}`;
+
+    return NextResponse.redirect(new URL(redirectUrl, req.url).href);
+  } catch (error) {
+    console.error('Erro ao processar a requisição:', error);
+    return NextResponse.json({ error: 'Erro ao processar a requisição.' }, { status: 500 });
   }
 }

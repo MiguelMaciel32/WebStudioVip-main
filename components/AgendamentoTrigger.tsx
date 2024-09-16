@@ -1,21 +1,25 @@
-import { useState } from "react";
-import { useToast } from "./ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Sheet, SheetHeader, SheetTitle, SheetDescription, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useState } from 'react';
+import { useToast } from './ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Sheet, SheetHeader, SheetTitle, SheetDescription, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+
+interface AgendamentoTriggerProps {
+  children: React.ReactNode;
+  empresaId: number;
+  servico: string;
+  precoServico: number;
+  userId?: number; // userId é opcional
+}
 
 export default function AgendamentoTrigger({
   children,
   empresaId,
   servico,
   precoServico,
-}: {
-  children: React.ReactNode;
-  empresaId: number;
-  servico: string;
-  precoServico: number;
-}) {
+  userId,
+}: AgendamentoTriggerProps) {
   const [name, setName] = useState('');
   const [telefone, setTelefone] = useState('');
   const [date, setDate] = useState('');
@@ -23,47 +27,76 @@ export default function AgendamentoTrigger({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  // Estado para mensagens de erro específicas
+  const [errors, setErrors] = useState({
+    name: '',
+    telefone: '',
+    date: '',
+    time: '',
+  });
+
+  // Função para validar se todos os campos estão preenchidos
   const camposPreenchidos = () => name && telefone && date && time;
+
+  // Função para validar o formato do telefone
   const telefoneValido = (telefone: string) => /^\(?\d{2}\)?[\s-]?[\s9]?\d{4}-?\d{4}$/.test(telefone);
 
+  // Função para validar os campos e atualizar mensagens de erro
+  const validarCampos = () => {
+    const newErrors = {
+      name: name ? '' : 'O nome é obrigatório.',
+      telefone: telefoneValido(telefone) ? '' : 'Número de telefone inválido.',
+      date: date ? '' : 'A data é obrigatória.',
+      time: time ? '' : 'O horário é obrigatório.',
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((error) => error); // Retorna true se não houver erros
+  };
+
+  // Função para gerar o pagamento
   const handleGeneratePayment = async () => {
-    if (!camposPreenchidos() || !telefoneValido(telefone)) {
-      toast({ title: "Por favor, preencha todos os campos corretamente.", variant: "destructive" });
+    // Valida campos antes de enviar
+    if (!validarCampos()) {
+      toast({ title: "Por favor, corrija os erros e preencha todos os campos corretamente.", variant: "destructive" });
       return;
     }
 
     const token = sessionStorage.getItem('token');
+    
     if (!token) {
       toast({ title: "Você precisa estar logado para realizar o agendamento.", variant: "destructive" });
+      console.log('Erro: Token não encontrado no sessionStorage');
       return;
     }
 
     setLoading(true);
-    const dataHora = `${date}T${time}:00`;
+    const dataHora = `${date}T${time}:00`; // Formata a data e a hora no formato ISO
 
     try {
       const response = await fetch('/api/create-preference', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, 
+          'Authorization': `Bearer ${token}`, // Passa o token no cabeçalho
         },
         body: JSON.stringify({
-          description: servico,
-          price: precoServico,
-          quantity: 1,
           empresaId,
           servico,
-          pagamento_id: `pagamento_${Date.now()}` // Gerar um pagamento_id único
+          precoServico,
+          data_hora: dataHora,
+          nome: name,
+          telefone,
+          userId: userId || null,
         }),
       });
 
       const data = await response.json();
 
-      if (response.ok && data.id) {
-        window.location.href = `https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=${data.id}`;
+      if (response.ok && data.init_point) {
+        window.location.href = data.init_point; // Redireciona para o Mercado Pago
       } else {
         toast({ title: `Erro: ${data.error}`, variant: "destructive" });
+        console.log('Erro na resposta da API:', data.error);
       }
     } catch (error) {
       console.error('Erro ao gerar o pagamento:', error);
@@ -84,58 +117,52 @@ export default function AgendamentoTrigger({
           </SheetDescription>
         </SheetHeader>
         <section className="grid gap-4 py-4">
-          <section className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">Nome</Label>
-            <Input
-              id="name"
-              className="col-span-3"
-              placeholder="Luis Miguel"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
+          <section className="space-y-2">
+            <Label htmlFor="name">Nome</Label>
+            <Input 
+              id="name" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              disabled={loading}
             />
+            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
           </section>
-          <section className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="tel" className="text-right">Telefone</Label>
-            <Input
-              id="tel"
-              className="col-span-3"
-              placeholder="+55 (**) *********"
-              type="tel"
-              value={telefone}
-              onChange={(e) => setTelefone(e.target.value)}
-              required
+          <section className="space-y-2">
+            <Label htmlFor="telefone">Telefone</Label>
+            <Input 
+              id="telefone" 
+              value={telefone} 
+              onChange={(e) => setTelefone(e.target.value)} 
+              disabled={loading}
             />
+            {errors.telefone && <p className="text-red-500 text-sm">{errors.telefone}</p>}
           </section>
-          <section className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="date" className="text-right">Data</Label>
-            <Input
-              id="date"
-              className="col-span-3"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
+          <section className="space-y-2">
+            <Label htmlFor="date">Data</Label>
+            <Input 
+              id="date" 
+              type="date" 
+              value={date} 
+              onChange={(e) => setDate(e.target.value)} 
+              disabled={loading}
             />
+            {errors.date && <p className="text-red-500 text-sm">{errors.date}</p>}
           </section>
-          <section className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="time" className="text-right">Horário</Label>
-            <Input
-              id="time"
-              className="col-span-3"
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              required
+          <section className="space-y-2">
+            <Label htmlFor="time">Hora</Label>
+            <Input 
+              id="time" 
+              type="time" 
+              value={time} 
+              onChange={(e) => setTime(e.target.value)} 
+              disabled={loading}
             />
+            {errors.time && <p className="text-red-500 text-sm">{errors.time}</p>}
           </section>
-        </section>
-        <div className="py-4">
-          <Button onClick={handleGeneratePayment} disabled={loading}>
-            {loading ? "Gerando pagamento..." : "Gerar Pagamento"}
+          <Button onClick={handleGeneratePayment} disabled={loading || !camposPreenchidos()}>
+            {loading ? 'Gerando pagamento...' : 'Gerar pagamento'}
           </Button>
-        </div>
+        </section>
       </SheetContent>
     </Sheet>
   );

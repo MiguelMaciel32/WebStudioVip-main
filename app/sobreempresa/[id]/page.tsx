@@ -1,4 +1,5 @@
-'use client'
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import AgendamentoTrigger from "@/components/AgendamentoTrigger";
@@ -11,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Image from "next/image";
+import { parseJwt } from "../../../lib/jwtUtils"; // Importa a função de decodificação
 
 interface Empresa {
   id: number;
@@ -34,8 +36,15 @@ function SobreEmpresa() {
   const { id } = useParams();
   const [empresa, setEmpresa] = useState<Empresa | null>(null);
   const [servicos, setServicos] = useState<Servico[]>([]);
+  const [userId, setUserId] = useState<number | undefined>(undefined); // Use undefined por padrão
 
   useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      const decodedToken = parseJwt(token);
+      setUserId(decodedToken.id);
+    }
+
     if (id) {
       fetch(`/api/empresa?id=${id}`)
         .then((response) => response.json())
@@ -93,6 +102,7 @@ function SobreEmpresa() {
                 empresaId={empresa.id}
                 servico={servico.nome}
                 precoServico={servico.preco}
+                userId={userId} // Passa o userId aqui
               >
                 <Button variant={"secondary"}>Reservar</Button>
               </AgendamentoTrigger>

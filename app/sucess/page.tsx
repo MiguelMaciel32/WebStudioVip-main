@@ -20,6 +20,12 @@ export default function PaymentSuccess() {
       const externalReference = searchParams.get('external_reference');
       const paymentId = searchParams.get('payment_id');
 
+      if (!collectionId || !status || !paymentId || !externalReference) {
+        setError('Parâmetros ausentes.');
+        setLoading(false);
+        return;
+      }
+
       if (status !== 'approved') {
         setError('O pagamento não foi aprovado.');
         setLoading(false);
@@ -27,8 +33,11 @@ export default function PaymentSuccess() {
       }
 
       try {
-        // Passando parâmetros na URL ao invés de `params` no objeto de fetch
-        const url = `/api/suce?collection_id=${collectionId}&status=${status}&external_reference=${externalReference}&payment_id=${paymentId}`;
+        // Verificar e codificar externalReference
+        const encodedExternalReference = encodeURIComponent(externalReference);
+
+        // Atualize a URL do fetch para o endpoint correto
+        const url = `/api/suce?collection_id=${collectionId}&status=${status}&external_reference=${encodedExternalReference}&payment_id=${paymentId}`;
 
         const response = await fetch(url, {
           method: 'GET',

@@ -1,5 +1,4 @@
-'use client';
-
+'use client'
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import AgendamentoTrigger from "@/components/AgendamentoTrigger";
@@ -43,6 +42,9 @@ function SobreEmpresa() {
     if (token) {
       const decodedToken = parseJwt(token);
       setUserId(decodedToken.id);
+
+      // Log do userId para verificar se foi obtido corretamente
+      console.log("User ID decodificado:", decodedToken.id);
     }
 
     if (id) {

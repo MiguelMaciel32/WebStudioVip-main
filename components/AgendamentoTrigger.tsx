@@ -27,7 +27,6 @@ export default function AgendamentoTrigger({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  // Estado para mensagens de erro específicas
   const [errors, setErrors] = useState({
     name: '',
     telefone: '',
@@ -35,13 +34,12 @@ export default function AgendamentoTrigger({
     time: '',
   });
 
-  // Função para validar se todos os campos estão preenchidos
   const camposPreenchidos = () => name && telefone && date && time;
 
-  // Função para validar o formato do telefone
+  
   const telefoneValido = (telefone: string) => /^\(?\d{2}\)?[\s-]?[\s9]?\d{4}-?\d{4}$/.test(telefone);
 
-  // Função para validar os campos e atualizar mensagens de erro
+ 
   const validarCampos = () => {
     const newErrors = {
       name: name ? '' : 'O nome é obrigatório.',
@@ -50,12 +48,12 @@ export default function AgendamentoTrigger({
       time: time ? '' : 'O horário é obrigatório.',
     };
     setErrors(newErrors);
-    return !Object.values(newErrors).some((error) => error); // Retorna true se não houver erros
+    return !Object.values(newErrors).some((error) => error); 
   };
 
-  // Função para gerar o pagamento
+ 
   const handleGeneratePayment = async () => {
-    // Valida campos antes de enviar
+   
     if (!validarCampos()) {
       toast({ title: "Por favor, corrija os erros e preencha todos os campos corretamente.", variant: "destructive" });
       return;
@@ -70,14 +68,14 @@ export default function AgendamentoTrigger({
     }
 
     setLoading(true);
-    const dataHora = `${date}T${time}:00`; // Formata a data e a hora no formato ISO
+    const dataHora = `${date}T${time}:00`; 
 
     try {
       const response = await fetch('/api/create-preference', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Passa o token no cabeçalho
+          'Authorization': `Bearer ${token}`, 
         },
         body: JSON.stringify({
           empresaId,
@@ -93,7 +91,7 @@ export default function AgendamentoTrigger({
       const data = await response.json();
 
       if (response.ok && data.init_point) {
-        window.location.href = data.init_point; // Redireciona para o Mercado Pago
+        window.location.href = data.init_point; 
       } else {
         toast({ title: `Erro: ${data.error}`, variant: "destructive" });
         console.log('Erro na resposta da API:', data.error);

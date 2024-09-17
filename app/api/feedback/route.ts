@@ -8,6 +8,7 @@ export async function POST(req: NextRequest) {
   try {
     console.log('Início da execução da função POST');
 
+    // Verificação e extração do token JWT
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.error('Token não encontrado ou formato inválido.');
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Erro ao processar o token.' }, { status: 401 });
     }
 
+    // Recebendo e processando o corpo da requisição
     const body = await req.json();
     console.log('Corpo da requisição recebido:', body);
 
@@ -38,6 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Pagamento não aprovado.' }, { status: 400 });
     }
 
+    // Extraindo dados do external_reference
     let nome: string, telefone: string, dataHora: string, empresaId: number, servico: string, precoServico: number;
     try {
       if (external_reference) {
@@ -46,8 +49,8 @@ export async function POST(req: NextRequest) {
         telefone = parsedReference.telefone;
         dataHora = parsedReference.data_hora;
         empresaId = parsedReference.empresaId;
-        servico = parsedReference.servico;
-        precoServico = parseFloat(parsedReference.precoServico);
+        servico = parsedReference.servico || ''; // Adicionando valor padrão para 'servico'
+        precoServico = parseFloat(parsedReference.precoServico) || 0; // Adicionando valor padrão para 'precoServico'
       } else {
         console.error('external_reference está nulo.');
         return NextResponse.json({ error: 'Dados de referência externa ausentes.' }, { status: 400 });
@@ -59,11 +62,13 @@ export async function POST(req: NextRequest) {
 
     console.log('Dados extraídos do external_reference:', { nome, telefone, dataHora, empresaId, servico, precoServico });
 
+    // Validação dos campos obrigatórios
     if (!empresaId || !dataHora || !nome || !telefone || !servico || isNaN(precoServico)) {
       console.log('Campos obrigatórios ausentes.');
       return NextResponse.json({ error: 'Campos obrigatórios ausentes.' }, { status: 400 });
     }
 
+    // Verificação se a data do agendamento está no passado
     const agendamentoDataDate = new Date(dataHora);
     const dataAtual = new Date();
 
@@ -72,6 +77,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não é possível agendar para uma data no passado.' }, { status: 400 });
     }
 
+    // Verificação se o horário já está ocupado
     console.log('Verificando se o horário já está ocupado...');
     const existingAgendamento = await query(
       'SELECT * FROM agendamentos WHERE empresa_id = ? AND data_hora = ?',
@@ -85,6 +91,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Este horário já está ocupado.' }, { status: 409 });
     }
 
+    // Inserção dos dados no banco de dados
     console.log('Preparando dados para inserção...');
     console.log({
       empresa_id: empresaId,

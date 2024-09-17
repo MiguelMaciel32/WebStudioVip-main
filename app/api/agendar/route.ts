@@ -2,50 +2,34 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '../../../lib/db';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = 'luismiguel'; // Cliente só
+const JWT_SECRET = 'luismiguel';
 
 export async function POST(req: NextRequest) {
   try {
-    // Recebe e loga o corpo da requisição
+    const token = req.headers.get('Authorization')?.split(' ')[1]; 
+    
+    if (!token) {
+      return NextResponse.json({ error: 'Acesso negado. Token não fornecido.' }, { status: 401 });
+    }
+
+    let userId;
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as { id: number };
+      userId = decoded.id;
+    } catch (error) {
+      return NextResponse.json({ error: 'Token inválido ou expirado.' }, { status: 403 });
+    }
+
     const body = await req.json();
-    console.log('Corpo da requisição recebido:', body);
+    const { empresa_id, data_hora, servico, nome, telefone, pagamento_id, external_reference } = body;
 
-    // Extrai os dados da resposta do pagamento
-    const { Payment, Status, MerchantOrder } = body;
-    console.log('ID do pagamento:', Payment);
-    console.log('Status do pagamento:', Status);
-    console.log('ID do pedido do comerciante:', MerchantOrder);
-
-    // Verifica se o pagamento foi aprovado
-    if (Status !== 'approved') {
-      return NextResponse.json({ error: 'Pagamento não aprovado.' }, { status: 400 });
-    }
-
-    // Aqui você deve obter os dados do agendamento com base no MerchantOrder
-    // Vamos supor que você tenha uma forma de obter esses dados. Para este exemplo, vamos usar dados fictícios:
-    const agendamentoData = {
-      empresa_id: 1, // Isso deve vir de onde você armazenou os dados temporários
-      data_hora: '2024-09-18T16:56:00',
-      servico: 'Sobrancelha',
-      nome: 'teste',
-      telefone: '11948710683'
-    };
-
-    const { empresa_id, data_hora, servico, nome, telefone } = agendamentoData;
-
-    // Verifica se todos os campos necessários estão presentes
-    if (!empresa_id || !data_hora || !servico || !nome || !telefone) {
-      return NextResponse.json({ error: 'Campos obrigatórios ausentes' }, { status: 400 });
-    }
-
-    const agendamentoDataDate = new Date(data_hora);
+    const agendamentoData = new Date(data_hora);
     const dataAtual = new Date();
 
-    if (agendamentoDataDate < dataAtual) {
+    if (agendamentoData < dataAtual) {
       return NextResponse.json({ error: 'Não é possível agendar para uma data no passado.' }, { status: 400 });
     }
 
-    // Verifica se o horário já está ocupado
     const existingAgendamento = await query(
       'SELECT * FROM agendamentos WHERE empresa_id = ? AND data_hora = ?',
       [empresa_id, data_hora]
@@ -55,16 +39,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Este horário já está ocupado.' }, { status: 409 });
     }
 
-    // Insere o agendamento na tabela
     const result = await query(
-      'INSERT INTO agendamentos (empresa_id, user_id, data_hora, servico, nome, telefone) VALUES (?, ?, ?, ?, ?, ?)',
-      [empresa_id, 1, data_hora, servico, nome, telefone] // Supondo user_id = 1, ajuste conforme necessário
+      'INSERT INTO agendamentos (empresa_id, user_id, data_hora, servico, nome, telefone, status, pagamento_id, external_reference) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [empresa_id, userId, data_hora, servico, nome, telefone, 'pendente', pagamento_id, external_reference]
     );
 
-    return NextResponse.json({ message: 'Agendamento realizado com sucesso!', result }, { status: 201 });
-
+    return NextResponse.json({ message: 'Agendamento realizado com sucesso! Aguardando confirmação de pagamento.', result }, { status: 201 });
   } catch (error) {
-    console.error('Erro ao processar o feedback:', error);
-    return NextResponse.json({ error: 'Erro ao processar o feedback.' }, { status: 500 });
+    console.error('Erro ao processar o agendamento:', error);
+    return NextResponse.json({ error: 'Erro ao processar o agendamento.' }, { status: 500 });
   }
 }

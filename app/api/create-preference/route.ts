@@ -53,33 +53,31 @@ export async function POST(request: Request) {
     }
 
     // Cria o objeto de preferência
-    const externalReference = JSON.stringify({ nome, telefone, data_hora, empresaId });
+    const externalReference = JSON.stringify({ nome, telefone, data_hora, empresaId, userId });
 
     const preference = {
       items: [
         {
           title: servico,
-          unit_price: parseFloat(precoServico.toFixed(2)), // Formata o preço para duas casas decimais
-          quantity: 1, // Ajuste se necessário
+          unit_price: parseFloat(precoServico.toFixed(2)),
+          quantity: 1,
         }
       ],
       back_urls: {
         success: 'http://localhost:3000/sucess',
-        failure: 'http://localhost:3000/api/erropay',
-        pending: 'http://localhost:3000/api/pendente'
+        failure: 'http://localhost:3000/erro',
+        pending: 'http://localhost:3000/pendente'
       },
-      auto_return: 'approved' as 'approved', // Valor esperado pela API
-      external_reference: externalReference // Adiciona a referência externa
+      auto_return: 'approved' as 'approved', 
+      external_reference: externalReference
     };
 
-    // Log do objeto de preferência
     console.log('Objeto de preferência criado:', preference);
 
-    // Faz a solicitação para criar a preferência no Mercado Pago
+   
     const response = await mercadopago.preferences.create(preference);
     console.log('Resposta da API do Mercado Pago:', response);
 
-    // Verifica a resposta e retorna o ponto inicial e o ID da preferência
     if (response.body.id) {
       console.log('Preferência criada com sucesso');
       return NextResponse.json({ init_point: response.body.init_point, preferenceId: response.body.id });
@@ -90,5 +88,38 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Erro ao criar preferência:', error);
     return NextResponse.json({ error: "Erro ao criar preferência." }, { status: 500 });
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const url = new URL(request.url);
+    const collectionId = url.searchParams.get('collection_id');
+    const status = url.searchParams.get('status');
+    const externalReference = url.searchParams.get('external_reference');
+    const paymentId = url.searchParams.get('payment_id');
+
+  
+    if (externalReference) {
+      const decodedReference = decodeURIComponent(externalReference);
+      const parsedReference = JSON.parse(decodedReference);
+
+      console.log('Dados de referência externa:', parsedReference);
+
+    
+      if (parsedReference) {
+      
+        return NextResponse.json({ success: true, data: parsedReference });
+      } else {
+        console.error('Dados de referência externa inválidos:', parsedReference);
+        return NextResponse.json({ error: 'Dados de referência externa inválidos.' }, { status: 400 });
+      }
+    } else {
+      console.error('External reference não encontrado na URL');
+      return NextResponse.json({ error: 'External reference não encontrado na URL.' }, { status: 400 });
+    }
+  } catch (error) {
+    console.error('Erro ao processar o feedback:', error);
+    return NextResponse.json({ error: 'Erro ao processar o feedback.' }, { status: 500 });
   }
 }

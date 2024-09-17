@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
@@ -15,7 +15,7 @@ import Image from 'next/image';
 
 interface Profile {
   id: string;
-  logo?: string; // Assuming 'logo' might be optional
+  logo?: string; 
   sobre?: string;
   telefone?: string;
   profile_picture?: string;
@@ -30,7 +30,7 @@ interface Agendamento {
 }
 
 export default function Page() {
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<'about' | 'contact' | false>(false);
@@ -42,8 +42,12 @@ export default function Page() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-           const token_empresa = sessionStorage.getItem('token_empresa'); 
-        
+        const token_empresa = sessionStorage.getItem('token_empresa');
+        if (!token_empresa) {
+          router.push('/login');
+          return;
+        }
+
         const response = await fetch('/api/profile-empresa', {
           method: 'GET',
           headers: {
@@ -51,12 +55,12 @@ export default function Page() {
           },
           credentials: 'include',
         });
-    
+
         const data = await response.json();
-    
+
         if (response.ok) {
           setProfile(data);
-          setImagePreview(data.logo);
+          setImagePreview(data.logo || '');
           setNewAbout(data.sobre || '');
           setNewContact(data.telefone || '');
         } else {
@@ -75,8 +79,16 @@ export default function Page() {
   useEffect(() => {
     const fetchAgendamentos = async () => {
       try {
+        const token_empresa = sessionStorage.getItem('token_empresa');
+        if (!token_empresa) {
+          throw new Error('Token não encontrado');
+        }
+
         const response = await fetch('/api/agendamentos', {
           method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token_empresa}`,
+          },
           credentials: 'include',
         });
 
@@ -85,7 +97,7 @@ export default function Page() {
         if (response.ok) {
           setAgendamentos(data);
         } else {
-          toast({ title: 'Erro ao buscar agendamentos.' });
+          toast({ title: data.error || 'Erro ao buscar agendamentos.' });
         }
       } catch (error) {
         console.error('Erro ao buscar agendamentos:', error);
@@ -120,25 +132,28 @@ export default function Page() {
     const confirmUpload = window.confirm('Você tem certeza que deseja atualizar a imagem do perfil?');
     if (!confirmUpload) return;
 
-       const token_empresa = sessionStorage.getItem('token_empresa');
+    const token_empresa = sessionStorage.getItem('token_empresa');
+    if (!token_empresa) {
+      toast({ title: 'Token não encontrado.' });
+      return;
+    }
+
     const formData = new FormData();
     formData.append('file', selectedFile);
-    formData.append('userId', profile?.id);
+    formData.append('userId', profile?.id || '');
 
     try {
       const response = await fetch('/api/upload', {
         method: 'POST',
-        headers: {  'Authorization': `Bearer ${token_empresa}` },
+        headers: { 
+          'Authorization': `Bearer ${token_empresa}`,
+        },
         body: formData,
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setProfile((prevProfile: any) => ({
-          ...prevProfile,
-          profile_picture: data.profilePicture,
-        }));
         sessionStorage.setItem('profilePicture', data.profilePicture);
         toast({ title: 'Imagem atualizada com sucesso!' });
         window.location.reload();
@@ -157,7 +172,12 @@ export default function Page() {
       return;
     }
 
-       const token_empresa = sessionStorage.getItem('token_empresa');
+    const token_empresa = sessionStorage.getItem('token_empresa');
+    if (!token_empresa) {
+      toast({ title: 'Token não encontrado.' });
+      return;
+    }
+
     const response = await fetch('/api/update-profile', {
       method: 'PUT',
       headers: {
@@ -165,7 +185,7 @@ export default function Page() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        userId: profile?.id,
+        userId: profile?.id || '',
         about: newAbout,
         contact: newContact,
       }),
@@ -174,11 +194,11 @@ export default function Page() {
     const data = await response.json();
 
     if (response.ok) {
-      setProfile((prevProfile: any) => ({
+      setProfile((prevProfile) => ({
         ...prevProfile,
         about: newAbout,
         contact: newContact,
-      }));
+      }) as Profile); // Assegura que o tipo retornado é Profile
       setIsEditing(false);
       toast({ title: 'Perfil atualizado com sucesso!' });
     } else {

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Cabeçalho de autorização não encontrado' }, { status: 401 });
   }
 
-  const token = authorizationHeader.split(' ')[1]; // Remove 'Bearer ' do token
+  const token = authorizationHeader.split(' ')[1]; 
   
   if (!token) {
     return NextResponse.json({ error: 'Token não encontrado' }, { status: 401 });

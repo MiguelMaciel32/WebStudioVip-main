@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET_EMPRESA = 'luismiguel-empresa'; // Chave secreta distinta para empresa
+const JWT_SECRET_EMPRESA = 'luismiguel-empresa';
 
 export async function POST(request: NextRequest) {
     const { cnpj, email, senha } = await request.json();
@@ -12,7 +12,6 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        // Execute a query para buscar a empresa pelo CNPJ e email
         const results = await query(`
             SELECT * FROM empresas
             WHERE cnpj = ? AND email = ?
@@ -24,23 +23,20 @@ export async function POST(request: NextRequest) {
 
         const empresa = results[0];
 
-        // Comparar a senha diretamente
         if (empresa.senha === senha) {
             const tokenEmpresa = jwt.sign(
-                { id: empresa.id, username: empresa.username }, // Payload do JWT
+                { id: empresa.id, username: empresa.username }, 
                 JWT_SECRET_EMPRESA,
                 { expiresIn: '1h' }
             );
 
-            // Usar uma imagem padrão se o campo profile_picture estiver vazio ou undefined
-            const profilePicture = empresa.profile_picture || '/foto.jpg'; // Define uma imagem padrão
-
-            // Retornar o token e outras informações corretamente
+          
+            const profilePicture = empresa.profile_picture || '/foto.jpg'; 
             return NextResponse.json({
                 message: 'Login bem-sucedido',
-                profilePicture, // Retorna a imagem de perfil ou a padrão
+                profilePicture,
                 name: empresa.name,
-                tokenEmpresa // Retornar o token correto
+                tokenEmpresa 
             });
         } else {
             return NextResponse.json({ error: 'Senha incorreta' }, { status: 401 });

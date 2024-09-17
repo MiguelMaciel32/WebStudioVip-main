@@ -33,10 +33,8 @@ export default function PaymentSuccess() {
       }
 
       try {
-        // Verificar e codificar externalReference
         const encodedExternalReference = encodeURIComponent(externalReference);
 
-        // Atualize a URL do fetch para o endpoint correto
         const url = `/api/suce?collection_id=${collectionId}&status=${status}&external_reference=${encodedExternalReference}&payment_id=${paymentId}`;
 
         const response = await fetch(url, {
@@ -74,7 +72,7 @@ export default function PaymentSuccess() {
           <div className="mx-auto mb-4 bg-green-100 rounded-full p-3 w-fit">
             <CheckCircle className="h-6 w-6 text-green-600" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">Pagamento {error ? 'Falhou' : 'Aprovado'}</CardTitle>
+          <CardTitle className="text-2xl font-bold text-gray-900">Pagamento Aprovado</CardTitle>
         </CardHeader>
         <CardContent className="text-center">
           <p className="text-gray-600 mb-6">{error ? error : message}</p>

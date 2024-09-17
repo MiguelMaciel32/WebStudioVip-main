@@ -1,8 +1,12 @@
+'use client'
 import { Clock, ArrowRight, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useRouter } from 'next/navigation';
+
 
 export default function PaymentPending() {
+  const router = useRouter();
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -27,11 +31,7 @@ export default function PaymentPending() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
-          <Button className="w-full">
-            Atualizar Status
-            <RefreshCw className="ml-2 h-4 w-4" />
-          </Button>
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" onClick={() => router.push('/')} className="w-full">
             Voltar para a Loja
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

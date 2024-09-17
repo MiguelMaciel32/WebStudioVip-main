@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Camera, Clock, DollarSign, Trash2, User, PencilIcon } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { toast } from '@/components/ui/use-toast'; // Import toast for notifications
+import { toast } from '@/components/ui/use-toast';
+
 
 interface Servico {
   id: number;
@@ -26,29 +27,26 @@ export default function ConfigurarEmpresa() {
   const [newAbout, setNewAbout] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
-  const [logoEmpresa, setLogoEmpresa] = useState<string | null>(null); // Logo da empresa
+  const [logoEmpresa, setLogoEmpresa] = useState<string | null>(null); 
   const [fotoPessoal, setFotoPessoal] = useState<string | null>(null);
-  const templateBusiness = '/foto.jpg'; // Caminho padrão para caso não tenha logo
+  const templateBusiness = '/foto.jpg'; 
 
-  const router = useRouter(); // Para redirecionamento
+  const router = useRouter(); 
 
-  // Função para carregar dados da empresa, incluindo os serviços
   const carregarDadosEmpresa = async () => {
     try {
-      const token = sessionStorage.getItem('token_empresa'); // Certifique-se de que o token está armazenado
+      const token = sessionStorage.getItem('token_empresa');
 
       if (!token) {
-        // Se o token não existir, redireciona para a página de login
         toast({ title: 'Você precisa estar logado para acessar esta página.' });
-        router.push('/login'); // Redirecionar para a página de login
+        router.push('/login'); 
         return;
       }
 
-      // Carregando os dados gerais da empresa
       const response = await fetch('/api/empresa/dados', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}` // Enviando o token JWT no cabeçalho
+          'Authorization': `Bearer ${token}` 
         }
       });
 
@@ -57,10 +55,10 @@ export default function ConfigurarEmpresa() {
       }
 
       const data = await response.json();
-      setDescricao(data.sobre || ''); // Definir sobre a empresa
-      setLogoEmpresa(data.logo || templateBusiness); // Definir logo da empresa
+      setDescricao(data.sobre || '');
+      setLogoEmpresa(data.logo || templateBusiness);
 
-      // Carregando os serviços da empresa
+
       const servicoResponse = await fetch('/api/servico/listar', {
         method: 'GET',
         headers: {
@@ -73,7 +71,7 @@ export default function ConfigurarEmpresa() {
       }
 
       const servicosData = await servicoResponse.json();
-      setServicos(servicosData); // Definir os serviços recebidos da API
+      setServicos(servicosData); 
     } catch (error) {
       console.error(error);
       toast({ title: 'Erro ao carregar dados da empresa e serviços.' });
@@ -81,14 +79,14 @@ export default function ConfigurarEmpresa() {
   };
 
   useEffect(() => {
-    carregarDadosEmpresa(); // Carregar os dados da empresa ao montar o componente
+    carregarDadosEmpresa(); 
   }, []);
 
-  // Função para adicionar um novo serviço
+
   const adicionarServico = async () => {
     if (novoServico.nome && novoServico.preco && novoServico.duracao) {
       try {
-        const token = sessionStorage.getItem('token_empresa'); // Certifique-se de que o token está armazenado
+        const token = sessionStorage.getItem('token_empresa');
         const response = await fetch('/api/servico/cadastrar', {
           method: 'POST',
           headers: {
@@ -97,8 +95,8 @@ export default function ConfigurarEmpresa() {
           },
           body: JSON.stringify({
             nome: novoServico.nome,
-            preco: novoServico.preco,  // Ajustado para 'preco'
-            duracao: novoServico.duracao  // Ajustado para 'duracao'
+            preco: novoServico.preco,  
+            duracao: novoServico.duracao  
           })
         });
 
@@ -107,7 +105,7 @@ export default function ConfigurarEmpresa() {
         }
 
         const result = await response.json();
-        setServicos(prev => [...prev, result]); // Adicionar o novo serviço retornado
+        setServicos(prev => [...prev, result]); 
         setNovoServico({ id: 0, nome: '', preco: 0, duracao: '' });
       } catch (error) {
         console.error(error);
@@ -116,12 +114,11 @@ export default function ConfigurarEmpresa() {
     }
   };
 
-  // Função para remover um serviço
   const removerServico = async (index: number) => {
     const servicoId = servicos[index].id;
 
     try {
-      const token = sessionStorage.getItem('token_empresa'); // Certifique-se de que o token está armazenado
+      const token = sessionStorage.getItem('token_empresa');
       const response = await fetch('/api/servico/remover', {
         method: 'DELETE',
         headers: {
@@ -144,30 +141,34 @@ export default function ConfigurarEmpresa() {
 
   const handleSave = async () => {
     try {
-      const token = sessionStorage.getItem('token_empresa'); // Certifique-se de que o token está armazenado
-      const response = await fetch('/api/empresa/update', {
+      const token = sessionStorage.getItem('token_empresa'); 
+  
+      if (!token) {
+        throw new Error('Token de autorização não encontrado.');
+      }
+  
+      const response = await fetch('/api/Update', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          descricao: newAbout,
-          logo: logoEmpresa // Atualizando o logo no banco
+          descricao: newAbout
         })
       });
-
+  
       if (!response.ok) {
         throw new Error('Erro ao atualizar informações da empresa');
       }
-
+  
       setDescricao(newAbout);
       setIsEditing(false);
     } catch (error) {
       console.error(error);
       toast({ title: 'Erro ao atualizar informações da empresa.' });
     }
-  };
+  };  
 
   const handleServicoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

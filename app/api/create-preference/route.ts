@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         }
       ],
       back_urls: {
-        success: 'http://localhost:3000/api/suce',
+        success: 'http://localhost:3000/sucess',
         failure: 'http://localhost:3000/api/erropay',
         pending: 'http://localhost:3000/api/pendente'
       },

@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useRouter } from 'next/router';
 
 export default function PaymentSuccess() {
   const searchParams = useSearchParams();
@@ -28,16 +27,13 @@ export default function PaymentSuccess() {
       }
 
       try {
-        const response = await fetch('/api/suce', {
+        // Passando parâmetros na URL ao invés de `params` no objeto de fetch
+        const url = `/api/suce?collection_id=${collectionId}&status=${status}&external_reference=${externalReference}&payment_id=${paymentId}`;
+
+        const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-          },
-          params: {
-            collection_id: collectionId,
-            status: status,
-            external_reference: externalReference,
-            payment_id: paymentId,
           },
         });
 

@@ -2,22 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '../../../lib/db';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'luismiguel'; // Certifique-se de usar um segredo seguro
+const JWT_SECRET = process.env.JWT_SECRET || 'luismiguel';
 
 export async function POST(req: NextRequest) {
   try {
     console.log('Início da execução da função POST');
 
-    // Obtém o token do cabeçalho de autorização
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.error('Token não encontrado ou formato inválido.');
       return NextResponse.json({ error: 'Token não encontrado ou formato inválido.' }, { status: 401 });
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' do início
-
-    // Decodifica o token para obter o user_id
+    const token = authHeader.substring(7);
     let userId: number;
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
@@ -28,23 +25,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Erro ao processar o token.' }, { status: 401 });
     }
 
-    // Recebe e loga o corpo da requisição
     const body = await req.json();
     console.log('Corpo da requisição recebido:', body);
 
-    // Extrai os dados da resposta do pagamento
     const { collection_id, collection_status, payment_id, status, external_reference } = body;
     console.log('ID do pagamento:', payment_id);
     console.log('Status do pagamento:', status);
     console.log('ID do pedido do comerciante:', collection_id);
 
-    // Verifica se o pagamento foi aprovado
     if (status !== 'approved') {
       console.log('Pagamento não aprovado.');
       return NextResponse.json({ error: 'Pagamento não aprovado.' }, { status: 400 });
     }
 
-    // Processa external_reference
     let nome: string, telefone: string, dataHora: string, empresaId: number, servico: string, precoServico: number;
     try {
       if (external_reference) {
@@ -54,7 +47,7 @@ export async function POST(req: NextRequest) {
         dataHora = parsedReference.data_hora;
         empresaId = parsedReference.empresaId;
         servico = parsedReference.servico;
-        precoServico = parsedReference.precoServico;
+        precoServico = parseFloat(parsedReference.precoServico);
       } else {
         console.error('external_reference está nulo.');
         return NextResponse.json({ error: 'Dados de referência externa ausentes.' }, { status: 400 });
@@ -64,16 +57,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Erro ao processar dados de referência externa.' }, { status: 400 });
     }
 
-    console.log('Dados extraídos do external_reference:');
-    console.log({ nome, telefone, dataHora, empresaId, servico, precoServico });
+    console.log('Dados extraídos do external_reference:', { nome, telefone, dataHora, empresaId, servico, precoServico });
 
-    // Verifica se todos os campos necessários estão presentes
-    if (!empresaId || !dataHora || !nome || !telefone || !servico || !precoServico) {
+    if (!empresaId || !dataHora || !nome || !telefone || !servico || isNaN(precoServico)) {
       console.log('Campos obrigatórios ausentes.');
       return NextResponse.json({ error: 'Campos obrigatórios ausentes.' }, { status: 400 });
     }
 
-    // Verifica se a data e hora do agendamento são válidas
     const agendamentoDataDate = new Date(dataHora);
     const dataAtual = new Date();
 
@@ -82,7 +72,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não é possível agendar para uma data no passado.' }, { status: 400 });
     }
 
-    // Verifica se o horário já está ocupado
     console.log('Verificando se o horário já está ocupado...');
     const existingAgendamento = await query(
       'SELECT * FROM agendamentos WHERE empresa_id = ? AND data_hora = ?',
@@ -96,25 +85,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Este horário já está ocupado.' }, { status: 409 });
     }
 
-    // Insere o agendamento na tabela
-    console.log('Inserindo agendamento...');
-    const result = await query(
-      'INSERT INTO agendamentos (empresa_id, user_id, data_hora, servico, nome, telefone, preco_servico, payment_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [empresaId, userId, dataHora, servico, nome, telefone, precoServico, payment_id, 'pendente'] // O status é definido como 'pendente' por padrão
-    );
-
-    console.log('Agendamento inserido com sucesso. Dados do agendamento:');
+    console.log('Preparando dados para inserção...');
     console.log({
       empresa_id: empresaId,
+      user_id: userId,
       data_hora: dataHora,
       servico,
       nome,
       telefone,
       preco_servico: precoServico,
-      payment_id
+      payment_id,
+      status: 'pendente'
     });
 
-    return NextResponse.json({ message: 'Agendamento realizado com sucesso!', result }, { status: 201 });
+    try {
+      const result = await query(
+        'INSERT INTO agendamentos (empresa_id, user_id, data_hora, servico, nome, telefone, preco_servico, payment_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [empresaId, userId, dataHora, servico, nome, telefone, precoServico, payment_id, 'pendente']
+      );
+
+      console.log('Resultado da inserção:', result);
+      return NextResponse.json({ message: 'Agendamento realizado com sucesso!', result }, { status: 201 });
+
+    } catch (insertError) {
+      console.error('Erro ao inserir o agendamento:', insertError);
+      return NextResponse.json({ error: 'Erro ao inserir o agendamento.' }, { status: 500 });
+    }
 
   } catch (error) {
     console.error('Erro ao processar o feedback:', error);

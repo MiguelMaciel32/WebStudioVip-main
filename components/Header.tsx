@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';  
 import { ModeToggle } from './ui/mode-toggle'; 
 import { useRouter } from 'next/navigation';
+import { Settings } from 'lucide-react';
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -69,9 +70,11 @@ export default function Header() {
         </h1>
       </Link>
       <nav className="flex gap-5 items-center relative">
-        {/* Exibir o botão "Cadastrar Empresa" apenas se o usuário estiver logado como empresa */}
+        {}
         {isLoggedInEmpresa && (
-          <Button variant="outline">Cadastrar Empresa</Button>
+          <Link href="/config-profile">
+          <Button  variant="outline"><Settings /></Button>
+          </Link>
         )}
 
         <ModeToggle />
@@ -91,7 +94,7 @@ export default function Header() {
               <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <ul className="flex flex-col p-2">
                   <li className="p-2 hover:bg-gray-100">
-                    <Link className='text-escuro' href={isLoggedInEmpresa ? "/config-profile" : "/profile"}>
+                    <Link className='text-escuro' href={isLoggedInEmpresa ? "/profile-business" : "/profile"}>
                       Perfil
                     </Link>
                   </li>

@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MapPin, Star } from "lucide-react";
 import { StarsIcon } from "lucide-react";
 
 async function fetchProducts() {
@@ -42,29 +44,38 @@ export default function PaginaDeProdutos() {
       <p className="text-muted-foreground leading-relaxed text-center md:text-xl md:text-start mt-2">
         Que tal marcar com um dos profissionais disponíveis em nossa plataforma?
       </p>
-      <section className="grid grid-cols-1 place-items-center md:grid-cols-4 justify-center gap-24">
+      <section className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {products.length > 0 ? (
           products.map((product) => (
             <Link key={product.id} href={`/sobreempresa/${product.id}`}>
-              <Card className="w-80 h-max mt-12 hover:transition-all">
-                <CardHeader>
+              <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg max-w-xs mx-auto">
+                <CardHeader className="p-0 relative">
                   <Image
-                    height={320}
-                    width={200}
-                    className="w-full object-cover aspect-square rounded-md"
-                    alt={product.company_name || 'Imagem da empresa'}
                     src={product.logo || '/Empresa.jpg'}
+                    alt={product.company_name || 'Imagem da empresa'}
+                    width={300}
+                    height={150}
+                    className="w-full h-36 object-cover"
                   />
                 </CardHeader>
-                <CardContent className="flex space-y-4">
-                  <section>
-                    <h1 className="font-bold">{product.company_name || 'Nome da Empresa'}</h1>
-                    <h1>{product.address || 'Endereço não disponível'}</h1>
-                  </section>
-                  <section className="flex bg-yellow-400 h-fit rounded-full px-2 items-center gap-1 -translate-y-4">
-                    <StarsIcon size={14} />
-                    <p>5.0</p>
-                  </section>
+                <CardContent className="p-4">
+                  <CardTitle className="text-lg font-bold mb-1 truncate">{product.company_name || 'Nome da Empresa'}</CardTitle>
+                  <div className="flex items-center mb-2 text-muted-foreground">
+                    <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                    <p className="text-xs truncate">{product.address || 'Endereço não disponível'}</p>
+                  </div>
+                  <div className="flex items-center mb-3">
+                    <Avatar className="w-8 h-8 mr-2">
+                      <AvatarImage src={product.logo || '/placeholder.svg?height=40&width=40'} alt="Avatar do proprietário" />
+                      <AvatarFallback>P</AvatarFallback>
+                    </Avatar>
+                    <div className="flex items-center">
+                      <StarsIcon size={14} className="text-yellow-400" />
+                      <span className="text-sm font-semibold text-primary ml-1">{product.rating?.toFixed(1) || '5.0'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                  </div>
                 </CardContent>
               </Card>
             </Link>

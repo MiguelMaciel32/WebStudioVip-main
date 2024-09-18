@@ -211,44 +211,7 @@ export default function Page() {
       <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
       </header>
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Total de Clientes</CardDescription>
-              <CardTitle className="text-4xl">12,345</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xs text-muted-foreground">+5% do Último mês</div>
-            </CardContent>
-            <CardFooter>
-              <Progress value={25} aria-label="25% increase" />
-            </CardFooter>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Total de Vendas</CardDescription>
-              <CardTitle className="text-4xl">R$71,50</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xs text-muted-foreground">+10% do Último mês</div>
-            </CardContent>
-            <CardFooter>
-              <Progress value={12} aria-label="12% increase" />
-            </CardFooter>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Compromissos</CardDescription>
-              <CardTitle className="text-4xl">53</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xs text-muted-foreground">+20% do Último mês</div>
-            </CardContent>
-            <CardFooter>
-              <Progress value={20} aria-label="20% increase" />
-            </CardFooter>
-          </Card>
-        </div>
+       
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card className="col-span-2">
             <CardHeader className="pb-2">

@@ -42,7 +42,7 @@ export default function Home() {
               src="/foto.jpg"
               width="550"
             />
-            <section className="flex flex-col justify-center space-y-4">
+            <section className="flex flex-col justify-center space-y-4 ">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-6xl/none">
                 Studio Vip
               </h1>
@@ -61,45 +61,8 @@ export default function Home() {
             </section>
           </section>
           <section>
-            <section className="text-2xl gap-6 flex mt-6 mx-auto w-fit p-3 md:p-8 dark:bg-zinc-950 border rounded-lg  ">
-              <Select>
-                <SelectTrigger className="flex-1 md:w-[280px]">
-                  <SelectValue placeholder="Localizacao" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="loc1">Barueri</SelectItem>
-                  <SelectItem value="loc2">Itapevi</SelectItem>
-                  <SelectItem value="loc3">Cotia</SelectItem>
-                  <SelectItem value="loc4">Jandira</SelectItem>
-                  <SelectItem value="loc5">Osasco</SelectItem>
-                  <SelectItem value="loc6">Barra Funda</SelectItem>
-                  <SelectItem value="loc7">São Paulo</SelectItem>
-                  <SelectItem value="loc8">Guarulhos</SelectItem>
-                  <SelectItem value="loc9">Suzano</SelectItem>
-                  <SelectItem value="loc10">Vargem Grande</SelectItem>
-                  <SelectItem value="loc11">São Roque</SelectItem>
-                  <SelectItem value="loc12">Lapa</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select>
-                <SelectTrigger className="flex-1 md:w-[280px]">
-                  <SelectValue placeholder="Servicos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="servicos_tatu">Tatuagem</SelectItem>
-                  <SelectItem value="servicos_cabelo">Cabelo</SelectItem>
-                  <SelectItem value="servicos_maquiagem">Maquiagem</SelectItem>
-                  <SelectItem value="servicos_spa">Spa</SelectItem>
-                  <SelectItem value="servicos_outros">Outros</SelectItem>
-                </SelectContent>
-              </Select>
-              <Link href={"/products"}>
-                <Button className="md:w-80">Buscar</Button>
-              </Link>
-            </section>
           </section>
-          <section className="grid mt-32 mx-9 grid-cols-1 md:grid-cols-2">
+          <section className="grid mt-40 mx-9 grid-cols-1 md:grid-cols-2">
             <Image
               className="rounded-lg shadow-md aspect-video"
               alt="Cabelos Image Maquiagem Agendamento"

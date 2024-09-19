@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';  
 import { ModeToggle } from './ui/mode-toggle'; 
 import { useRouter } from 'next/navigation';
-import { Settings } from 'lucide-react';
+import { Settings, ShoppingCart } from 'lucide-react';
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -70,7 +70,11 @@ export default function Header() {
         </h1>
       </Link>
       <nav className="flex gap-5 items-center relative">
-        {}
+        {isLoggedIn && (
+          <Link href="/compras">
+            <Button  variant="outline"><ShoppingCart /></Button>
+          </Link>
+        )}
         {isLoggedInEmpresa && (
           <Link href="/config-profile">
           <Button  variant="outline"><Settings /></Button>

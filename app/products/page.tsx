@@ -23,6 +23,7 @@ async function fetchProducts() {
 
 export default function PaginaDeProdutos() {
   const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true); // Adicionar estado de carregamento
 
   useEffect(() => {
     async function loadProducts() {
@@ -31,6 +32,8 @@ export default function PaginaDeProdutos() {
         setProducts(data);
       } catch (error) {
         console.error('Erro ao carregar produtos:', error);
+      } finally {
+        setLoading(false); // Garantir que o loading seja removido após a requisição
       }
     }
     loadProducts();
@@ -44,46 +47,52 @@ export default function PaginaDeProdutos() {
       <p className="text-muted-foreground leading-relaxed text-center md:text-xl md:text-start mt-2">
         Que tal marcar com um dos profissionais disponíveis em nossa plataforma?
       </p>
-      <section className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {products.length > 0 ? (
-          products.map((product) => (
-            <Link key={product.id} href={`/sobreempresa/${product.id}`}>
-              <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg max-w-xs mx-auto">
-                <CardHeader className="p-0 relative">
-                  <Image
-                    src={product.logo || '/Empresa.jpg'}
-                    alt={product.company_name || 'Imagem da empresa'}
-                    width={300}
-                    height={150}
-                    className="w-full h-36 object-cover"
-                  />
-                </CardHeader>
-                <CardContent className="p-4">
-                  <CardTitle className="text-lg font-bold mb-1 truncate">{product.company_name || 'Nome da Empresa'}</CardTitle>
-                  <div className="flex items-center mb-2 text-muted-foreground">
-                    <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                    <p className="text-xs truncate">{product.address || 'Endereço não disponível'}</p>
-                  </div>
-                  <div className="flex items-center mb-3">
-                    <Avatar className="w-8 h-8 mr-2">
-                      <AvatarImage src={product.logo || '/placeholder.svg?height=40&width=40'} alt="Avatar do proprietário" />
-                      <AvatarFallback>P</AvatarFallback>
-                    </Avatar>
-                    <div className="flex items-center">
-                      <StarsIcon size={14} className="text-yellow-400" />
-                      <span className="text-sm font-semibold text-primary ml-1">{product.rating?.toFixed(1) || '5.0'}</span>
+
+      {loading ? (
+        <p className="text-center mt-8">Carregando...</p> // Adicionar feedback de carregamento
+      ) : (
+        <section className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {products.length > 0 ? (
+            products.map((product) => (
+              <Link key={product.id} href={`/sobreempresa/${product.id}`}>
+                <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg max-w-xs mx-auto">
+                  <CardHeader className="p-0 relative">
+                    <Image
+                      src={product.ambient_photo || '/Empresa.jpg'}
+                      alt={product.company_name || 'Imagem da empresa'}
+                      width={300}
+                      height={150}
+                      className="w-full h-36 object-cover"
+                      priority={product === products[0]} // Otimizar o carregamento da primeira imagem
+                    />
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <CardTitle className="text-lg font-bold mb-1 truncate">{product.company_name || 'Nome da Empresa'}</CardTitle>
+                    <div className="flex items-center mb-2 text-muted-foreground">
+                      <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <p className="text-xs truncate">{product.address || 'Endereço não disponível'}</p>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))
-        ) : (
-          <p className="text-center">Nenhum produto encontrado.</p>
-        )}
-      </section>
+                    <div className="flex items-center mb-3">
+                      <Avatar className="w-8 h-8 mr-2">
+                        <AvatarImage src={product.logo || '/placeholder.svg?height=40&width=40'} alt="Avatar do proprietário" />
+                        <AvatarFallback>P</AvatarFallback>
+                      </Avatar>
+                      <div className="flex items-center">
+                        <StarsIcon size={14} className="text-yellow-400" />
+                        <span className="text-sm font-semibold text-primary ml-1">{product.rating?.toFixed(1) || '5.0'}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))
+          ) : (
+            <p className="text-center">Nenhum produto encontrado.</p>
+          )}
+        </section>
+      )}
     </section>
   );
 }

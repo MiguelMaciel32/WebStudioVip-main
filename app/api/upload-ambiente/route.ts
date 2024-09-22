@@ -1,9 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { query } from '../../../lib/db'; 
 import jwt from 'jsonwebtoken';
+import { query } from '../../../lib/db';
 
 interface DecodedToken {
   id: number;
@@ -12,7 +12,7 @@ interface DecodedToken {
 const uploadDirectory = path.join(process.cwd(), 'public', 'uploads');
 const JWT_SECRET = 'luismiguel-empresa';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const authorizationHeader = req.headers.get('Authorization');
 
@@ -34,25 +34,31 @@ export async function POST(req: Request) {
     }
 
     const formData = await req.formData();
-    const file = formData.get('file') as Blob | null;
+    const file = formData.get('file');
 
-    if (!file) {
-      return NextResponse.json({ error: 'Arquivo não fornecido.' }, { status: 400 });
+    if (!file || !(file instanceof Blob)) {
+      return NextResponse.json({ error: 'Arquivo não fornecido ou inválido.' }, { status: 400 });
     }
 
     const fileName = `${uuidv4()}.png`;
     const filePath = path.join(uploadDirectory, fileName);
 
-    await fs.mkdir(uploadDirectory, { recursive: true });
+    // Crie o diretório se não existir
+    if (!fs.existsSync(uploadDirectory)) {
+      fs.mkdirSync(uploadDirectory, { recursive: true });
+    }
 
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(filePath, fileBuffer);
+    // Converta o arquivo para Buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Salve o arquivo no disco
+    fs.writeFileSync(filePath, buffer);
 
     const imageUrl = `/uploads/${fileName}`;
 
-    // Atualizar o registro da empresa com o novo logo
     await query(
-      'UPDATE empresas SET logo = ? WHERE id = ?',
+      'UPDATE empresas SET ambient_photo = ? WHERE id = ?',
       [imageUrl, userId]
     );
 

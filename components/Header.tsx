@@ -8,41 +8,67 @@ import { ModeToggle } from './ui/mode-toggle';
 import { useRouter } from 'next/navigation';
 import { Settings, ShoppingCart } from 'lucide-react';
 
+// Caminhos absolutos para imagens de fallback no diretório public
+const templateClient = '/foto.jpg';  // Caminho da imagem padrão para clientes
+const templateBusiness = '/foto.jpg'; // Caminho da imagem padrão para empresas
+
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isLoggedInEmpresa, setIsLoggedInEmpresa] = useState<boolean>(false);
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
-
-  
-  const templateClient = '../public/foto.jpg'; 
-  const templateBusiness = '../public/foto.jpg';
+  const [profilePicture, setProfilePicture] = useState<string>('');  // Inicializa com string vazia
+  const [logoEmpresa, setLogoEmpresa] = useState<string>('');        // Inicializa com string vazia
 
   const router = useRouter();
 
+  const carregarDadosEmpresa = async () => {
+    try {
+      const token = sessionStorage.getItem('token_empresa');
+      if (!token) return;
+
+      const response = await fetch('/api/empresa/dados', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao carregar dados da empresa');
+      }
+
+      const data = await response.json();
+      setLogoEmpresa(data.logo || '');  // Define a logo da empresa se existir
+    } catch (error) {
+      console.error('Erro ao carregar dados da empresa:', error);
+    }
+  };
+
   useEffect(() => {
+    carregarDadosEmpresa();
+
     const token = sessionStorage.getItem('token');
     const token_empresa = sessionStorage.getItem('token_empresa');
-    const savedProfilePicture = sessionStorage.getItem('profilePicture');
-    const savedProfileBusiness = sessionStorage.getItem('profileBusiness');
+    const savedProfilePicture = sessionStorage.getItem('profilePicture');  // Foto do cliente
+    const savedProfileBusiness = sessionStorage.getItem('profileBusiness'); // Logo da empresa
 
-   
+    // Verificação de quem está logado e ajuste das imagens
     if (token && !token_empresa) {
       setIsLoggedIn(true);
       setIsLoggedInEmpresa(false); 
-      setProfilePicture(savedProfilePicture || templateClient);
+      setProfilePicture(savedProfilePicture || templateClient);  // Usa a imagem salva ou fallback de cliente
     }
 
     if (token_empresa && !token) {
       setIsLoggedInEmpresa(true);
       setIsLoggedIn(false); 
-      setProfilePicture(savedProfileBusiness || templateBusiness);
+      setProfilePicture(savedProfileBusiness || logoEmpresa || templateBusiness);  // Usa a imagem salva da empresa ou logo carregada
     }
 
-    
     if (token && token_empresa) {
+      // Caso o usuário tenha os dois tokens (empresa e cliente), priorizamos a empresa
       setIsLoggedInEmpresa(true);
       setIsLoggedIn(false);
-      setProfilePicture(savedProfileBusiness || templateBusiness);
+      setProfilePicture(savedProfileBusiness || logoEmpresa || templateBusiness);  // Usa a imagem salva da empresa ou logo carregada
     }
   }, []);
 
@@ -50,7 +76,7 @@ export default function Header() {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('profilePicture');
     setIsLoggedIn(false);
-    setProfilePicture(null);
+    setProfilePicture(templateClient);  // Reseta para imagem de cliente
     window.location.reload();
   };
 
@@ -58,9 +84,12 @@ export default function Header() {
     sessionStorage.removeItem('token_empresa');
     sessionStorage.removeItem('profileBusiness');
     setIsLoggedInEmpresa(false);
-    setProfilePicture(null);
+    setProfilePicture(templateBusiness);  // Reseta para imagem de empresa
     window.location.reload();
   };
+
+  // Definindo a URL da imagem de forma dinâmica com base em quem está logado
+  const imageUrl = isLoggedInEmpresa ? logoEmpresa || templateBusiness : profilePicture || templateClient;
 
   return (
     <header className="border-b px-4 py-2 gap-2 bg-background/80 backdrop-blur flex items-center sticky top-0 inset-0">
@@ -72,23 +101,23 @@ export default function Header() {
       <nav className="flex gap-5 items-center relative">
         {isLoggedIn && (
           <Link href="/compras">
-            <Button  variant="outline"><ShoppingCart /></Button>
+            <Button variant="outline"><ShoppingCart /></Button>
           </Link>
         )}
         {isLoggedInEmpresa && (
           <Link href="/config-profile">
-          <Button  variant="outline"><Settings /></Button>
+            <Button variant="outline"><Settings /></Button>
           </Link>
         )}
 
         <ModeToggle />
 
         <div className="flex items-center gap-2 relative">
-          {isLoggedIn || isLoggedInEmpresa ? (
+          {(isLoggedIn || isLoggedInEmpresa) && (
             <div className="relative group">
               <div className="cursor-pointer">
                 <Image
-                  src={profilePicture || templateClient} 
+                  src={imageUrl} 
                   alt="Profile"
                   width={40}
                   height={40}
@@ -113,7 +142,9 @@ export default function Header() {
                 </ul>
               </div>
             </div>
-          ) : (
+          )}
+
+          {!isLoggedIn && !isLoggedInEmpresa && (
             <Link href="/login" className='text-muted-foreground'>
               <Button variant="outline">Login</Button>
             </Link>

@@ -8,10 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Camera, Clock, DollarSign, Trash2, User, PencilIcon } from 'lucide-react';
+import { Trash2, User, PencilIcon } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from '@/components/ui/use-toast';
-
+import { ImagePlus, X } from "lucide-react";
 
 interface Servico {
   id: number;
@@ -21,14 +21,18 @@ interface Servico {
 }
 
 export default function ConfigurarEmpresa() {
+  const [profile, setProfile] = useState<any>(null);
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [novoServico, setNovoServico] = useState<Servico>({ id: 0, nome: '', preco: 0, duracao: '' });
   const [descricao, setDescricao] = useState('');
   const [newAbout, setNewAbout] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [fotoPerfil, setFotoPerfil] = useState<string | null>(null);
-  const [logoEmpresa, setLogoEmpresa] = useState<string | null>(null); 
-  const [fotoPessoal, setFotoPessoal] = useState<string | null>(null);
+  const [logoEmpresa, setLogoEmpresa] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false); // Novo estado para confirmação da imagem
+
   const templateBusiness = '/foto.jpg'; 
 
   const router = useRouter(); 
@@ -43,6 +47,7 @@ export default function ConfigurarEmpresa() {
         return;
       }
 
+      // Carrega os dados da empresa
       const response = await fetch('/api/empresa/dados', {
         method: 'GET',
         headers: {
@@ -56,9 +61,9 @@ export default function ConfigurarEmpresa() {
 
       const data = await response.json();
       setDescricao(data.sobre || '');
-      setLogoEmpresa(data.logo || templateBusiness);
+      setLogoEmpresa(data.logo || templateBusiness); // Define logo ou imagem padrão
 
-
+      // Carrega os serviços da empresa
       const servicoResponse = await fetch('/api/servico/listar', {
         method: 'GET',
         headers: {
@@ -82,7 +87,6 @@ export default function ConfigurarEmpresa() {
     carregarDadosEmpresa(); 
   }, []);
 
-
   const adicionarServico = async () => {
     if (novoServico.nome && novoServico.preco && novoServico.duracao) {
       try {
@@ -95,8 +99,8 @@ export default function ConfigurarEmpresa() {
           },
           body: JSON.stringify({
             nome: novoServico.nome,
-            preco: novoServico.preco,  
-            duracao: novoServico.duracao  
+            preco: novoServico.preco,
+            duracao: novoServico.duracao
           })
         });
 
@@ -168,7 +172,7 @@ export default function ConfigurarEmpresa() {
       console.error(error);
       toast({ title: 'Erro ao atualizar informações da empresa.' });
     }
-  };  
+  };
 
   const handleServicoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -186,20 +190,170 @@ export default function ConfigurarEmpresa() {
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files?.[0]) {
+      const file = event.target.files[0];
+      setSelectedFile(file);
+      setImagePreview(URL.createObjectURL(file));
+      setIsConfirming(true); // Inicia a confirmação da imagem
+    } else {
+      setSelectedFile(null);
+      setImagePreview(null);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      toast({ title: 'Nenhum arquivo selecionado.' });
+      return;
+    }
+
+    const confirmUpload = window.confirm('Você tem certeza que deseja atualizar a imagem do perfil?');
+    if (!confirmUpload) return;
+
+    const token = sessionStorage.getItem('token_empresa');
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    
+    try {
+      const response = await fetch('/api/upload2', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao fazer upload da imagem.');
+      }
+
+      const data = await response.json();
+      setProfile((prevProfile: any) => ({
+        ...prevProfile,
+        profile_picture: data.profilePicture,
+      }));
+      sessionStorage.setItem('profilePicture', data.profilePicture);
+      toast({ title: 'Imagem atualizada com sucesso!' });
+      window.location.reload();
+    } catch (error) {
+      console.error('Erro ao fazer upload da imagem:', error);
+      toast({ title: 'Erro ao fazer upload da imagem.' });
+    }
+  };
+
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleImageUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImageUrl(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      handleImageUpload(file);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
+      handleImageUpload(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageUrl(null);
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex flex-col items-center mb-8">
         <Label htmlFor="fotoPessoal" className="cursor-pointer">
           <Avatar className="w-32 h-32 mb-4">
-            <AvatarImage src={fotoPessoal || logoEmpresa || templateBusiness} alt="Foto Pessoal" />
+            <AvatarImage src={imagePreview || logoEmpresa || templateBusiness} alt="Logo da Empresa" />
             <AvatarFallback><User className="w-16 h-16" /></AvatarFallback>
           </Avatar>
-          <Input id="fotoPessoal" type="file" className="hidden" onChange={(e) => handleImagemChange(e, setFotoPessoal)} accept="image/*" />
+          <Input id="fotoPessoal" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
         </Label>
-        <span className="text-sm text-muted-foreground">Clique para trocar a foto</span>
+        {isConfirming ? (
+          <div className="mt-2">
+            <Button onClick={handleUpload} className="mr-2">Confirmar Imagem</Button>
+            <Button onClick={() => setIsConfirming(false)} variant="outline">Cancelar</Button>
+          </div>
+        ) : (
+          <Button onClick={handleUpload} className="mt-2">Atualizar Imagem</Button>
+        )}
       </div>
 
       <h1 className="text-3xl font-bold mb-6 text-center">Configurar Empresa</h1>
+
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-center">Adicione ou altere a foto da sua empresa</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div
+            className={`relative h-64 border-2 border-dashed rounded-lg ${
+              isDragging ? "border-primary" : "border-gray-300"
+            } ${imageUrl ? "p-0" : "p-4"} transition-all duration-200 ease-in-out`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            {imageUrl ? (
+              <>
+                <img
+                  src={imageUrl}
+                  alt="Company location"
+                  className="w-full h-full object-cover rounded-lg"
+                />
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="absolute top-2 right-2"
+                  onClick={handleRemoveImage}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Remove image</span>
+                </Button>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <ImagePlus className="h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-sm text-gray-500 mb-2">Puxe e Solte sua imagem aqui ou cliquei pra carregar!</p>
+                <Button variant="secondary" onClick={() => document.getElementById("photo-upload")?.click()}>
+                  Trocar Foto
+                </Button>
+              </div>
+            )}
+          </div>
+          <input
+            id="photo-upload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileInputChange}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -274,36 +428,34 @@ export default function ConfigurarEmpresa() {
           <Button onClick={adicionarServico} className="mt-4">Adicionar Serviço</Button>
         </CardContent>
       </Card>
-      
-      
-      <Card>
-  <CardHeader>
-    <CardTitle>Serviços Cadastrados</CardTitle>
-  </CardHeader>
-  <CardContent>
-    {servicos.length === 0 ? (
-      <p>Nenhum serviço cadastrado.</p>
-    ) : (
-      <div className="flex flex-wrap gap-4">
-        {servicos.map((servico, index) => (
-          <Card key={index} className="w-full max-w-sm">
-            <CardContent className="p-6 flex justify-between items-center">
-              <div className="space-y-1">
-                <h3 className="font-semibold text-lg">{servico.nome}</h3>
-                <p className="text-sm text-muted-foreground">Valor: R$ {servico.preco}</p>
-                <p className="text-sm text-muted-foreground">{servico.duracao} min</p>
-              </div>
-              <Button variant="destructive" size="icon" onClick={() => removerServico(index)} aria-label="Deletar serviço">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )}
-  </CardContent>
-</Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Serviços Cadastrados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {servicos.length === 0 ? (
+            <p>Nenhum serviço cadastrado.</p>
+          ) : (
+            <div className="flex flex-wrap gap-4">
+              {servicos.map((servico, index) => (
+                <Card key={index} className="w-full max-w-sm">
+                  <CardContent className="p-6 flex justify-between items-center">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold text-lg">{servico.nome}</h3>
+                      <p className="text-sm text-muted-foreground">Valor: R$ {servico.preco}</p>
+                      <p className="text-sm text-muted-foreground">{servico.duracao} min</p>
+                    </div>
+                    <Button variant="destructive" size="icon" onClick={() => removerServico(index)} aria-label="Deletar serviço">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server';
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { query } from '../../../lib/db'; 
 import jwt from 'jsonwebtoken';
-import { query } from '../../../lib/db';
 
 interface DecodedToken {
   id: number;
@@ -26,7 +26,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Token não encontrado no cabeçalho.' }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
+    let decoded: DecodedToken;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
+    } catch (err) {
+      return NextResponse.json({ error: 'Token inválido ou expirado.' }, { status: 401 });
+    }
+
     const userId = decoded.id;
 
     if (!userId) {
@@ -34,26 +40,19 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = await req.formData();
-    const file = formData.get('file');
+    const file = formData.get('file') as Blob | null;
 
-    if (!file || !(file instanceof Blob)) {
-      return NextResponse.json({ error: 'Arquivo não fornecido ou inválido.' }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ error: 'Arquivo não fornecido.' }, { status: 400 });
     }
 
     const fileName = `${uuidv4()}.png`;
     const filePath = path.join(uploadDirectory, fileName);
 
-    // Crie o diretório se não existir
-    if (!fs.existsSync(uploadDirectory)) {
-      fs.mkdirSync(uploadDirectory, { recursive: true });
-    }
+    await fs.mkdir(uploadDirectory, { recursive: true });
 
-    // Converta o arquivo para Buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // Salve o arquivo no disco
-    fs.writeFileSync(filePath, buffer);
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    await fs.writeFile(filePath, fileBuffer);
 
     const imageUrl = `/uploads/${fileName}`;
 

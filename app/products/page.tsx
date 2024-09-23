@@ -23,7 +23,7 @@ async function fetchProducts() {
 
 export default function PaginaDeProdutos() {
   const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true); // Adicionar estado de carregamento
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadProducts() {
@@ -33,7 +33,7 @@ export default function PaginaDeProdutos() {
       } catch (error) {
         console.error('Erro ao carregar produtos:', error);
       } finally {
-        setLoading(false); // Garantir que o loading seja removido após a requisição
+        setLoading(false);
       }
     }
     loadProducts();
@@ -49,7 +49,7 @@ export default function PaginaDeProdutos() {
       </p>
 
       {loading ? (
-        <p className="text-center mt-8">Carregando...</p> // Adicionar feedback de carregamento
+        <p className="text-center mt-8">Carregando...</p>
       ) : (
         <section className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {products.length > 0 ? (
@@ -63,7 +63,7 @@ export default function PaginaDeProdutos() {
                       width={300}
                       height={150}
                       className="w-full h-36 object-cover"
-                      priority={product === products[0]} // Otimizar o carregamento da primeira imagem
+                      priority={product === products[0]} 
                     />
                   </CardHeader>
                   <CardContent className="p-4">

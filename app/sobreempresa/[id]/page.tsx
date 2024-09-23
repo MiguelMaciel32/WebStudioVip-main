@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Image from "next/image";
-import { parseJwt } from "../../../lib/jwtUtils"; // Importa a função de decodificação
+import { parseJwt } from "../../../lib/jwtUtils"; 
 
 interface Empresa {
   id: number;
@@ -21,6 +21,7 @@ interface Empresa {
   telefone: string;
   sobre: string | null;
   address: string;
+  ambient_photo: string | null;
   logo: string | null;
 }
 
@@ -35,15 +36,13 @@ function SobreEmpresa() {
   const { id } = useParams();
   const [empresa, setEmpresa] = useState<Empresa | null>(null);
   const [servicos, setServicos] = useState<Servico[]>([]);
-  const [userId, setUserId] = useState<number | undefined>(undefined); // Use undefined por padrão
+  const [userId, setUserId] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const token = sessionStorage.getItem('token');
     if (token) {
       const decodedToken = parseJwt(token);
       setUserId(decodedToken.id);
-
-      // Log do userId para verificar se foi obtido corretamente
       console.log("User ID decodificado:", decodedToken.id);
     }
 
@@ -68,10 +67,10 @@ function SobreEmpresa() {
         <header className="container grid grid-cols-1 md:grid-cols-2 place-items-center mb-24">
           <section className="flex justify-center mb-4 md:mb-0">
             <Image
-              src={empresa.logo || "/Empresa.jpg"}
+              src={empresa.ambient_photo || "/Empresa.jpg"}
               alt={empresa.nome_empresa}
-              width={300}
-              height={300}
+              width={520}
+            height={520}
               className="aspect-video object-cover rounded-lg min-w-fit max-w-2xl"
             />
           </section>
@@ -85,7 +84,6 @@ function SobreEmpresa() {
           </section>
         </header>
 
-        {/* Sessão de serviços */}
         <section className="space-y-4">
           <h2 className="font-bold tracking-tighter text-3xl md:text-4xl leading-tight text-start md:text-center mb-4">
             Serviços

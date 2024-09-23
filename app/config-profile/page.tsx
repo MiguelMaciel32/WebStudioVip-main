@@ -31,7 +31,7 @@ export default function ConfigurarEmpresa() {
   const [logoEmpresa, setLogoEmpresa] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isConfirming, setIsConfirming] = useState(false); // Novo estado para confirmação da imagem
+  const [isConfirming, setIsConfirming] = useState(false); 
 
   const templateBusiness = '/foto.jpg'; 
 
@@ -47,7 +47,7 @@ export default function ConfigurarEmpresa() {
         return;
       }
 
-      // Carrega os dados da empresa
+      
       const response = await fetch('/api/empresa/dados', {
         method: 'GET',
         headers: {
@@ -61,9 +61,8 @@ export default function ConfigurarEmpresa() {
 
       const data = await response.json();
       setDescricao(data.sobre || '');
-      setLogoEmpresa(data.logo || templateBusiness); // Define logo ou imagem padrão
+      setLogoEmpresa(data.logo || templateBusiness); 
 
-      // Carrega os serviços da empresa
       const servicoResponse = await fetch('/api/servico/listar', {
         method: 'GET',
         headers: {
@@ -279,9 +278,84 @@ export default function ConfigurarEmpresa() {
     }
   };
 
-  const handleRemoveImage = () => {
+
+
+  const handleDragOver2 = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+  
+  const handleDragLeave2 = () => {
+    setIsDragging(false);
+  };
+  
+  const handleDrop2 = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files[0];
+    if (file) {
+      const fileReader = new FileReader();
+      fileReader.onload = (e) => {
+        setImageUrl(e.target?.result as string);
+      };
+      fileReader.readAsDataURL(file);
+    }
+  };
+  
+  
+  const handleRemoveImage2 = () => {
     setImageUrl(null);
   };
+  
+  const handleFileInputChange2 = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const fileReader = new FileReader();
+      fileReader.onload = (e) => {
+        if (typeof e.target?.result === 'string') {
+          setImageUrl(e.target.result);
+        }
+      };
+      fileReader.readAsDataURL(file);
+    }
+  };
+  
+  
+  const handleUpload2 = async () => {
+    const fileInput = document.getElementById("photo-upload") as HTMLInputElement; // Type assertion to HTMLInputElement
+    const file = fileInput?.files?.[0]; // Use optional chaining to safely access the first file
+  
+    if (!file) {
+      alert("Nenhum arquivo selecionado.");
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append('file', file);
+  
+    try {
+      const token = sessionStorage.getItem('token_empresa');
+      const response = await fetch('/api/upload-ambiente', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error("Erro ao fazer upload da imagem.");
+      }
+  
+      const data = await response.json();
+      alert('Upload realizado com sucesso!');
+      setImageUrl(data.profilePicture);
+    } catch (error) {
+      console.error('Erro no upload:', error);
+      alert("Erro ao fazer upload da imagem.");
+    }
+};
+
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -305,55 +379,65 @@ export default function ConfigurarEmpresa() {
 
       <h1 className="text-3xl font-bold mb-6 text-center">Configurar Empresa</h1>
 
+      
+
+
+
+
+
       <Card className="w-full max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle className="text-center">Adicione ou altere a foto da sua empresa</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div
-            className={`relative h-64 border-2 border-dashed rounded-lg ${
-              isDragging ? "border-primary" : "border-gray-300"
-            } ${imageUrl ? "p-0" : "p-4"} transition-all duration-200 ease-in-out`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            {imageUrl ? (
-              <>
-                <img
-                  src={imageUrl}
-                  alt="Company location"
-                  className="w-full h-full object-cover rounded-lg"
-                />
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="absolute top-2 right-2"
-                  onClick={handleRemoveImage}
-                >
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">Remove image</span>
-                </Button>
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <ImagePlus className="h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-sm text-gray-500 mb-2">Puxe e Solte sua imagem aqui ou cliquei pra carregar!</p>
-                <Button variant="secondary" onClick={() => document.getElementById("photo-upload")?.click()}>
-                  Trocar Foto
-                </Button>
-              </div>
-            )}
-          </div>
-          <input
-            id="photo-upload"
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileInputChange}
+  <CardHeader>
+    <CardTitle className="text-center">Adicione ou altere a foto da sua empresa</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <div
+      className={`relative h-64 border-2 border-dashed rounded-lg ${
+        isDragging ? "border-primary" : "border-gray-300"
+      } ${imageUrl ? "p-0" : "p-4"} transition-all duration-200 ease-in-out`}
+      onDragOver={handleDragOver2}
+      onDragLeave={handleDragLeave2}
+      onDrop={handleDrop2}
+    >
+      {imageUrl ? (
+        <>
+          <img
+            src={imageUrl}
+            alt="Company location"
+            className="w-full h-full object-cover rounded-lg"
           />
-        </CardContent>
-      </Card>
+          <Button
+            size="icon"
+            variant="secondary"
+            className="absolute top-2 right-2"
+            onClick={handleRemoveImage2}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Remover imagem</span>
+          </Button>
+        </>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+          <ImagePlus className="h-12 w-12 text-gray-400 mb-4" />
+          <p className="text-sm text-gray-500 mb-2">Puxe e solte sua imagem aqui ou clique para carregar!</p>
+          <Button variant="secondary" onClick={() => document.getElementById("photo-upload")?.click()}>
+            Trocar Foto
+          </Button>
+        </div>
+      )}
+    </div>
+    <input
+      id="photo-upload"
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={handleFileInputChange2}
+    />
+
+    <div className="mt-4">
+      <Button onClick={handleUpload2}>Confirmar Upload</Button>
+    </div>
+  </CardContent>
+</Card>
 
       <Card>
         <CardHeader>

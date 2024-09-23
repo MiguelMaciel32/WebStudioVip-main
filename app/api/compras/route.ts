@@ -7,6 +7,7 @@ interface ServicoComprado {
   data_hora: string;
   servico: string;
   nome: string; // Atualizado para refletir a coluna `nome`
+  telefone: string; // Atualizado para refletir a coluna `telefone`
 }
 
 interface DecodedToken {
@@ -31,15 +32,15 @@ export async function GET(request: NextRequest) {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
 
-    // Atualize a consulta SQL para refletir a estrutura da tabela `agendamentos`
     const servicosComprados = await query<ServicoComprado[]>(`
-      SELECT id, data_hora, servico, nome as empresa
+      SELECT id, data_hora, servico, nome, telefone as empresa
       FROM agendamentos
       WHERE user_id = ?
       ORDER BY data_hora DESC
     `, [decoded.id]);
 
     return NextResponse.json(servicosComprados, { status: 200 });
+    console.log(servicosComprados);
   } catch (error) {
     console.error('Erro ao verificar o token JWT ou executar a consulta:', error);
 

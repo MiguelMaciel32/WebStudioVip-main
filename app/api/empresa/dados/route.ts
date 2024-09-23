@@ -6,14 +6,14 @@ interface Empresa {
   id: number;
   nome_empresa: string;
   logo: string;
+  ambient_photo: string;
   sobre: string;
 }
 
-const JWT_SECRET = 'luismiguel-empresa'; // O mesmo segredo utilizado no token JWT
-
+const JWT_SECRET = 'luismiguel-empresa'; 
 export async function GET(request: Request) {
   try {
-    // Recupera o token do cabeçalho de autorização
+   
     const token = request.headers.get('Authorization')?.replace('Bearer ', '');
     
     if (!token) {
@@ -21,10 +21,9 @@ export async function GET(request: Request) {
     }
 
     try {
-      // Verifica e decodifica o token JWT
       const decoded = jwt.verify(token, JWT_SECRET) as { id: number };
 
-      // Supondo que o `id` no token está associado ao ID da empresa ou ao ID de um usuário relacionado à empresa
+
       const result = await query<Empresa>('SELECT * FROM empresas WHERE id = ?', [decoded.id]);
 
       if (result.length === 0) {

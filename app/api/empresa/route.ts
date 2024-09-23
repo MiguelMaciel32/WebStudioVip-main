@@ -10,9 +10,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'ID não fornecido.' }, { status: 400 });
     }
 
-    // Buscar informações da empresa
     const empresa = await query(
-      'SELECT id, nome_empresa, email, cnpj, telefone, sobre, address, logo FROM empresas WHERE id = ?',
+      'SELECT id, nome_empresa, email, cnpj, telefone, sobre, address, logo, ambient_photo FROM empresas WHERE id = ?',
       [id]
     );
 
@@ -20,7 +19,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Empresa não encontrada.' }, { status: 404 });
     }
 
-    // Buscar serviços associados à empresa
     const servicos = await query(
       'SELECT id, nome, preco, duracao FROM servicos WHERE empresa_id = ?',
       [id]

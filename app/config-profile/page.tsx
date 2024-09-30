@@ -345,6 +345,8 @@ export default function ConfigurarEmpresa() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        // Verifica se há uma mensagem de erro específica para exibir
+        toast({ title: errorData.toast || errorData.error || 'Erro ao fazer upload.' });
         throw new Error(errorData.message || 'Erro ao fazer upload.');
       }
 
@@ -355,7 +357,6 @@ export default function ConfigurarEmpresa() {
       console.error("Erro ao fazer upload:", error);
     }
   };
-
 
   return (
     <div className="container mx-auto p-4 space-y-6">

@@ -1,16 +1,14 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { query } from '../../../lib/db'; 
+import { bucket } from '../../../lib/firebaseAdmin'; 
+import { query, execute } from '../../../lib/db'; 
 import jwt from 'jsonwebtoken';
 
 interface DecodedToken {
   id: number;
 }
 
-const uploadDirectory = path.join(process.cwd(), 'public', 'uploads');
-const JWT_SECRET = 'luismiguel-empresa';
+const JWT_SECRET = process.env.JWT_SECRET || 'luismiguel-empresa';
 
 export async function POST(req: Request) {
   try {
@@ -41,20 +39,36 @@ export async function POST(req: Request) {
     }
 
     const fileName = `${uuidv4()}.png`;
-    const filePath = path.join(uploadDirectory, fileName);
-
-    await fs.mkdir(uploadDirectory, { recursive: true });
-
     const fileBuffer = Buffer.from(await file.arrayBuffer());
-    await fs.writeFile(filePath, fileBuffer);
 
-    const imageUrl = `/uploads/${fileName}`;
+    const fileUpload = bucket.file(fileName);
 
-    // Atualizar o registro da empresa com o novo logo
-    await query(
-      'UPDATE empresas SET logo = ? WHERE id = ?',
-      [imageUrl, userId]
-    );
+    const stream = fileUpload.createWriteStream({
+      metadata: {
+        contentType: file.type,
+      },
+    });
+
+    await new Promise((resolve, reject) => {
+      stream.on('finish', () => {
+        console.log(`Imagem ${fileName} carregada com sucesso no Firebase Storage.`);
+        resolve(null);
+      });
+      stream.on('error', (error) => {
+        console.error('Erro durante o upload para o Firebase Storage:', error);
+        reject(new Error('Erro ao fazer upload para o Firebase Storage.'));
+      });
+      stream.end(fileBuffer);
+    });
+
+    const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(fileName)}?alt=media`;
+
+
+    const result = await execute('UPDATE empresas SET logo = ? WHERE id = ?', [imageUrl, userId]);
+
+    if (result.affectedRows === 0) {
+      return NextResponse.json({ error: 'Nenhuma linha foi atualizada. Verifique se o ID do usuário está correto.' }, { status: 404 });
+    }
 
     return NextResponse.json({ profilePicture: imageUrl }, { status: 200 });
   } catch (error) {

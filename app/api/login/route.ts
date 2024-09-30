@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query } from '../../../lib/db';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 
 interface User {
   id: number;
@@ -28,7 +29,9 @@ export async function POST(request: Request) {
 
     const user = result[0];
 
-    if (user.password === password) {
+    const senhaCorreta = await bcrypt.compare(password, user.password); 
+
+    if (senhaCorreta) {
       const token = jwt.sign(
         { id: user.id, username: user.username },
         JWT_SECRET,

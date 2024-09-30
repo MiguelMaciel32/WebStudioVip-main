@@ -322,39 +322,39 @@ export default function ConfigurarEmpresa() {
   
   
   const handleUpload2 = async () => {
-    const fileInput = document.getElementById("photo-upload") as HTMLInputElement; // Type assertion to HTMLInputElement
-    const file = fileInput?.files?.[0]; // Use optional chaining to safely access the first file
-  
+    const fileInput = document.getElementById("photo-upload") as HTMLInputElement;
+    const file = fileInput?.files?.[0];
+
     if (!file) {
-      alert("Nenhum arquivo selecionado.");
+      toast({ title: "Nenhum arquivo selecionado." });
       return;
     }
-  
+
     const formData = new FormData();
-    formData.append('file', file);
-  
+    formData.append('file', file); 
+
     try {
       const token = sessionStorage.getItem('token_empresa');
+      if (!token) throw new Error("Token de autenticação não encontrado.");
+
       const response = await fetch('/api/upload-ambiente', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
-  
+
       if (!response.ok) {
-        throw new Error("Erro ao fazer upload da imagem.");
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao fazer upload.');
       }
-  
-      const data = await response.json();
-      alert('Upload realizado com sucesso!');
-      setImageUrl(data.profilePicture);
+
+      toast({ title: "Upload realizado com sucesso!" });
+      carregarDadosEmpresa();
+      handleRemoveImage2();
     } catch (error) {
-      console.error('Erro no upload:', error);
-      alert("Erro ao fazer upload da imagem.");
+      console.error("Erro ao fazer upload:", error);
     }
-};
+  };
 
 
   return (

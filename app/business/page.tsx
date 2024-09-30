@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { ArrowBigLeft } from "lucide-react";
@@ -16,9 +15,11 @@ export default function BusinessCadastro() {
   const [telefone, setTelefone] = useState<string>("");
   const [senha, setSenha] = useState<string>("");
   const [address, setAddress] = useState<string>("");
+  const [cep, setCep] = useState<string>("");
+  const [estado, setEstado] = useState<string>("");
+  const [cidade, setCidade] = useState<string>("");
   const router = useRouter();
 
-  
   const validarCNPJ = (cnpj: string): boolean => {
     cnpj = cnpj.replace(/[^\d]+/g, "");
 
@@ -75,7 +76,6 @@ export default function BusinessCadastro() {
     setTelefone(formattedTelefone);
   };
 
-  
   const cadastrarEmpresa = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -92,7 +92,7 @@ export default function BusinessCadastro() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ nomeEmpresa, cnpj, email, telefone, senha, address }),
+        body: JSON.stringify({ nomeEmpresa, cnpj, email, telefone, senha, address, cep, estado, cidade }),
       });
 
       const data = await response.json();
@@ -119,7 +119,7 @@ export default function BusinessCadastro() {
   return (
     <main className="flex w-full h-screen overflow-y-hidden">
       <section className="mt-4 relative">
-        <Link href={"/login/business"} >
+        <Link href={"/login/business"}>
           <Button variant={"outline"} size={"icon"} className="rounded-lg fixed inset-x-2">
             <ArrowBigLeft />
           </Button>
@@ -166,6 +166,21 @@ export default function BusinessCadastro() {
             placeholder="Endereço" 
             value={address}
             onChange={(e) => setAddress(e.target.value)}
+          />
+          <Input 
+            placeholder="CEP" 
+            value={cep}
+            onChange={(e) => setCep(e.target.value)}
+          />
+          <Input 
+            placeholder="Estado" 
+            value={estado}
+            onChange={(e) => setEstado(e.target.value)}
+          />
+          <Input 
+            placeholder="Cidade" 
+            value={cidade}
+            onChange={(e) => setCidade(e.target.value)}
           />
           <Button className="gap-2 justify-center w-full" type="submit">
             Cadastrar nova conta empresarial!

@@ -1,11 +1,12 @@
+// Importações necessárias do Next.js e da função query para comunicação com o banco de dados
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 
-
+// Função para validar o CNPJ
 const validarCNPJ = (cnpj: string): boolean => {
     cnpj = cnpj.replace(/[^\d]+/g, "");
 
-    if (cnpj.length !== 14) return false; 
+    if (cnpj.length !== 14) return false;
 
     let soma = 0;
     let pos = 5;
@@ -32,35 +33,37 @@ const validarCNPJ = (cnpj: string): boolean => {
     return true;
 };
 
-
+// Função para validar o telefone
 const validarTelefone = (telefone: string): boolean => {
     telefone = telefone.replace(/\D/g, ''); 
-    return telefone.length === 11; 
+    return telefone.length === 11;
 };
 
+// Função principal que lida com a requisição POST
 export async function POST(request: NextRequest) {
-    const { nomeEmpresa, cnpj, email, telefone, senha, address } = await request.json();
+    const { nomeEmpresa, cnpj, email, telefone, senha, address, cep, estado, cidade } = await request.json();
 
-
-    if (!nomeEmpresa || !cnpj || !email || !telefone || !senha || !address) {
+    // Verificação dos campos obrigatórios
+    if (!nomeEmpresa || !cnpj || !email || !telefone || !senha || !address || !cep || !estado || !cidade) {
         return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 });
     }
 
- 
+    // Validação do CNPJ
     if (!validarCNPJ(cnpj)) {
         return NextResponse.json({ error: 'CNPJ inválido.' }, { status: 400 });
     }
 
-
+    // Validação do telefone
     if (!validarTelefone(telefone)) {
         return NextResponse.json({ error: 'Número de telefone inválido.' }, { status: 400 });
     }
 
+    // Tentativa de inserção no banco de dados
     try {
         const result = await query(`
-          INSERT INTO empresas (nome_empresa, cnpj, email, telefone, senha, address)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `, [nomeEmpresa, cnpj, email, telefone, senha, address]);
+          INSERT INTO empresas (nome_empresa, cnpj, email, telefone, senha, address, cep, estado, cidade)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [nomeEmpresa, cnpj, email, telefone, senha, address, cep, estado, cidade]);
 
         return NextResponse.json({ success: 'Empresa cadastrada com sucesso!' });
     } catch (error) {

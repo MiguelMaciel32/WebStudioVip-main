@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -9,56 +9,48 @@ import { FormEvent, useState, ChangeEvent } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { useRouter } from 'next/navigation';
 
-export default function Login() {
-  const [cpf, setCpf] = useState<string>("");
+const estados = [
+  { sigla: 'AC', nome: 'Acre' },
+  { sigla: 'AL', nome: 'Alagoas' },
+  { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' },
+  { sigla: 'BA', nome: 'Bahia' },
+  { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' },
+  { sigla: 'ES', nome: 'Espírito Santo' },
+  { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' },
+  { sigla: 'MT', nome: 'Mato Grosso' },
+  { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' },
+  { sigla: 'PA', nome: 'Pará' },
+  { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' },
+  { sigla: 'PE', nome: 'Pernambuco' },
+  { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'RN', nome: 'Rio Grande do Norte' },
+  { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' },
+  { sigla: 'RR', nome: 'Roraima' },
+  { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' },
+  { sigla: 'SE', nome: 'Sergipe' },
+  { sigla: 'TO', nome: 'Tocantins' }
+];
+
+export default function Cadastro() {
   const [email, setEmail] = useState<string>("");
   const [telefone, setTelefone] = useState<string>("");
   const [senha, setSenha] = useState<string>("");
   const [nome, setNome] = useState<string>("");
+  const [cidade, setCidade] = useState<string>("");
+  const [estado, setEstado] = useState<string>("");
   const router = useRouter();
-
-  const validarCPF = (cpf: string): boolean => {
-    cpf = cpf.replace(/[^\d]+/g, "");
-    if (cpf.length !== 11) return false;
-
-    let soma = 0;
-    let resto;
-    for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
-    resto = (soma * 10) % 11;
-    if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(cpf.substring(9, 10))) return false;
-
-    soma = 0;
-    for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
-    resto = (soma * 10) % 11;
-    if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(cpf.substring(10, 11))) return false;
-
-    return true;
-  };
-
-  const formatarCPF = (valor: string) => {
-    valor = valor.replace(/\D/g, "");
-    if (valor.length <= 11) {
-      valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
-      valor = valor.replace(/(\d{3})(\d)/, "$1.$2");
-      valor = valor.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    }
-    return valor;
-  };
-
-  const handleCpfChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const formattedCpf = formatarCPF(e.target.value);
-    setCpf(formattedCpf);
-  };
 
   const formatarTelefone = (valor: string) => {
     valor = valor.replace(/\D/g, "");
-    if (valor.length <= 11) {
-      valor = valor.replace(/(\d{2})(\d)/, "($1) $2");
-      valor = valor.replace(/(\d{5})(\d)/, "$1-$2");
-    }
-    return valor;
+    return valor.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
   };
 
   const handleTelefoneChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -69,20 +61,13 @@ export default function Login() {
   const cadastrarUsuario = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!validarCPF(cpf)) {
-      toast({
-        description: "CPF inválido!",
-      });
-      return;
-    }
-
     try {
       const response = await fetch('/api/cadastrar-usuario', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ nome, cpf, email, telefone, senha }),
+        body: JSON.stringify({ nome, email, telefone, senha, cidade, estado }),
       });
 
       const data = await response.json();
@@ -121,29 +106,48 @@ export default function Login() {
             placeholder="Nome" 
             value={nome}
             onChange={(e) => setNome(e.target.value)}
+            required
           />
           <Input
             type="text"
-            placeholder="CPF"
-            value={cpf}
-            onChange={handleCpfChange}
+            placeholder="Cidade"
+            value={cidade}
+            onChange={(e) => setCidade(e.target.value)}
+            required
           />
+          <select
+            value={estado}
+            onChange={(e) => setEstado(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          >
+            <option value="" disabled>Selecione o estado</option>
+            {estados.map((estado) => (
+              <option key={estado.sigla} value={estado.sigla}>
+                {estado.nome}
+              </option>
+            ))}
+          </select>
           <Input 
             placeholder="Email" 
+            type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
           <Input 
             placeholder="Telefone" 
             type="text" 
             value={telefone}
             onChange={handleTelefoneChange}
+            required
           />
           <Input 
             placeholder="Senha" 
             type="password" 
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
+            required
           />
           <Button className="gap-2 justify-center w-full" type="submit">
             <Sparkles size={16} />

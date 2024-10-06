@@ -6,8 +6,8 @@ const JWT_SECRET = 'luismiguel';
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get('Authorization')?.split(' ')[1]; 
-    
+    const token = req.headers.get('Authorization')?.split(' ')[1];
+
     if (!token) {
       return NextResponse.json({ error: 'Acesso negado. Token não fornecido.' }, { status: 401 });
     }
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { empresa_id, data_hora, servico, nome, telefone, pagamento_id, external_reference } = body;
+    const { empresaId, data_hora, servico, nome, telefone } = body; // Corrigido para usar o nome correto
 
     const agendamentoData = new Date(data_hora);
     const dataAtual = new Date();
@@ -30,9 +30,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não é possível agendar para uma data no passado.' }, { status: 400 });
     }
 
+    // Verificar se todos os dados necessários estão presentes
+    if (!empresaId || !data_hora || !servico || !nome || !telefone) {
+      return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 });
+    }
+
     const existingAgendamento = await query(
       'SELECT * FROM agendamentos WHERE empresa_id = ? AND data_hora = ?',
-      [empresa_id, data_hora]
+      [empresaId, data_hora] // Verifique se a empresaId é correta
     );
 
     if (existingAgendamento.length > 0) {
@@ -40,8 +45,8 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await query(
-      'INSERT INTO agendamentos (empresa_id, user_id, data_hora, servico, nome, telefone, status, pagamento_id, external_reference) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [empresa_id, userId, data_hora, servico, nome, telefone, 'pendente', pagamento_id, external_reference]
+      'INSERT INTO agendamentos (empresa_id, user_id, data_hora, servico, nome, telefone, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [empresaId, userId, data_hora, servico, nome, telefone, 'pendente']
     );
 
     return NextResponse.json({ message: 'Agendamento realizado com sucesso! Aguardando confirmação de pagamento.', result }, { status: 201 });

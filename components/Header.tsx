@@ -6,7 +6,14 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';  
 import { ModeToggle } from './ui/mode-toggle'; 
 import { useRouter } from 'next/navigation';
-import { Settings, ShoppingCart } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Settings, User, LogOut, ShoppingCart } from "lucide-react"
 import Compras from '@/components/compras';;
 
 const templateClient = '/foto.jpg';  
@@ -90,63 +97,61 @@ export default function Header() {
   const imageUrl = isLoggedInEmpresa ? logoEmpresa || templateBusiness : profilePicture || templateClient;
 
   return (
-    <header className="border-b px-4 py-2 gap-2 bg-background/80 backdrop-blur flex items-center sticky top-0 inset-0">
-      <Link href="/" className="flex-1">
-        <h1 className="text-lg font-bold flex-1 select-none cursor-pointer flex">
-          StudioVip
-        </h1>
-      </Link>
-      <nav className="flex gap-5 items-center relative">
-        {isLoggedIn && (
-           <Compras />
-        )}
-        {isLoggedInEmpresa && (
-          <Link href="/config-profile">
-            <Button variant="outline"><Settings /></Button>
-          </Link>
-        )}
+    <header className="border-b px-4 py-2 bg-background/80 backdrop-blur flex items-center sticky top-0 z-50">
+    <Link href="/" className="flex-1">
+      <h1 className="text-lg font-bold select-none cursor-pointer">
+        StudioVip
+      </h1>
+    </Link>
+    <nav className="flex gap-4 items-center">
+      <ModeToggle />
 
-        <ModeToggle />
-
-        <div className="flex items-center gap-2 relative">
-          {(isLoggedIn || isLoggedInEmpresa) && (
-            <div className="relative group">
-              <div className="cursor-pointer">
-                <Image
-                  src={imageUrl} 
-                  alt="Profile"
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover"
-                />
-              </div>
-              <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <ul className="flex flex-col p-2">
-                  <li className="p-2 hover:bg-gray-100">
-                    <Link className='text-escuro' href={isLoggedInEmpresa ? "/profile-business" : "/profile"}>
-                      Perfil
-                    </Link>
-                  </li>
-                  <li className="p-2 hover:bg-gray-100">
-                    <button
-                      onClick={isLoggedInEmpresa ? handleLogoutEmpresa : handleLogout}
-                      className="w-full text-left text-escuro"
-                    >
-                      Sair da conta
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          )}
-
-          {!isLoggedIn && !isLoggedInEmpresa && (
-            <Link href="/login" className='text-muted-foreground'>
-              <Button variant="outline">Login</Button>
-            </Link>
-          )}
-        </div>
-      </nav>
-    </header>
+      {(isLoggedIn || isLoggedInEmpresa) ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-12 w-12 rounded-full p-0">
+              <Image
+                src={imageUrl}
+                alt="Foto de perfil"
+                width={48}
+                height={48}
+                className="rounded-full object-cover"
+              />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuItem asChild>
+              <Link href={isLoggedInEmpresa ? "/profile-business" : "/profile"} className="flex items-center">
+                <User className="mr-2 h-4 w-4" />
+                <span>Perfil</span>
+              </Link>
+            </DropdownMenuItem>
+            {isLoggedInEmpresa && (
+              <DropdownMenuItem asChild>
+                <Link href="/config-profile" className="flex items-center">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Configurações</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {isLoggedIn && (
+              <DropdownMenuItem asChild>
+                 <Compras />
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={isLoggedInEmpresa ? handleLogoutEmpresa : handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sair da conta</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Link href="/login">
+          <Button variant="outline">Login</Button>
+        </Link>
+      )}
+    </nav>
+  </header>
   );
 }

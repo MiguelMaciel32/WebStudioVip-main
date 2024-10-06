@@ -1,9 +1,11 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
+import { ShoppingCart, Calendar, Building2, AlertCircle } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Sheet,
   SheetContent,
@@ -12,9 +14,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { ShoppingCart, Calendar, Building2, AlertCircle } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface Compra {
   id: number
@@ -123,10 +122,10 @@ export default function UltimasCompras() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <div className="flex items-center gap-2 cursor-pointer ml-2 ">
           <ShoppingCart className="w-4 h-4" />
-          Últimas Compras
-        </Button>
+          Serviços Agendados
+        </div>
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>

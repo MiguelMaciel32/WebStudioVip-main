@@ -52,13 +52,12 @@ export default function AgendamentoTrigger({
   };
 
  
-  const handleGeneratePayment = async () => {
-   
+  const agendar = async () => {
     if (!validarCampos()) {
       toast({ title: "Por favor, corrija os erros e preencha todos os campos corretamente.", variant: "destructive" });
       return;
     }
-
+  
     const token = sessionStorage.getItem('token');
     
     if (!token) {
@@ -66,34 +65,31 @@ export default function AgendamentoTrigger({
       console.log('Erro: Token não encontrado no sessionStorage');
       return;
     }
-
+  
     setLoading(true);
-    const dataHora = `${date}T${time}:00`; 
-
+    const dataHora = `${date}T${time}:00`;
+  
     try {
-      const response = await fetch('/api/create-preference', {
+      const response = await fetch('/api/agendar', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`, 
         },
         body: JSON.stringify({
-          empresaId,
+          empresaId, // Certifique-se de que o nome está correto
           servico,
-          precoServico,
           data_hora: dataHora,
           nome: name,
           telefone,
-          userId: userId || null,
         }),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok && data.init_point) {
         window.location.href = data.init_point; 
       } else {
-        toast({ title: `Erro: ${data.error}`, variant: "destructive" });
         console.log('Erro na resposta da API:', data.error);
       }
     } catch (error) {
@@ -103,6 +99,7 @@ export default function AgendamentoTrigger({
       setLoading(false);
     }
   };
+  
 
   return (
     <Sheet>
@@ -111,7 +108,7 @@ export default function AgendamentoTrigger({
         <SheetHeader>
           <SheetTitle>Agendamento</SheetTitle>
           <SheetDescription>
-            Preencha o formulário abaixo para gerar o pagamento via Mercado Pago. Após o pagamento, o agendamento será confirmado automaticamente.
+          Preencha o formulário abaixo para que o agendamento seja confirmado automaticamente.
           </SheetDescription>
         </SheetHeader>
         <section className="grid gap-4 py-4">
@@ -157,8 +154,8 @@ export default function AgendamentoTrigger({
             />
             {errors.time && <p className="text-red-500 text-sm">{errors.time}</p>}
           </section>
-          <Button onClick={handleGeneratePayment} disabled={loading || !camposPreenchidos()}>
-            {loading ? 'Gerando pagamento...' : 'Gerar pagamento'}
+          <Button onClick={agendar} disabled={loading || !camposPreenchidos()}>
+            {loading ? 'Agendando....' : 'Agendar'}
           </Button>
         </section>
       </SheetContent>

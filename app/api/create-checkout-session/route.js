@@ -37,7 +37,7 @@ export async function POST(req) {
         priceId = 'price_1Q6lZRJz7RrfV8r9sfphzrlF'; 
         break;
       case 'anual':
-        priceId = 'price_1Q6k5oJz7RrfV8r91KeHx1Xp'; 
+        priceId = 'price_1Q6laRJz7RrfV8r9YqzJo0o7'; 
         break;
       default:
         return new Response(JSON.stringify({ error: "Plano inválido." }), { status: 400 });

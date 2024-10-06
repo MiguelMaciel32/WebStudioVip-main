@@ -28,6 +28,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 import Link from "next/link";
+import AssinaturaComponent from "../components/assinatura";
 
 export default function Home() {
   return (
@@ -39,7 +40,7 @@ export default function Home() {
               alt="Hero"
               className="mx-auto aspect-square overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
               height="550"
-              src="/foto.jpg"
+              src="/ata.png"
               width="550"
             />
             <section className="flex flex-col justify-center space-y-4 ">

@@ -1,68 +1,48 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { NextRequest, NextResponse } from 'next/server'; // Importando as funções do Next.js
+import { execute } from '../../../lib/db'; // Importe suas funções de execução de consulta
 
 export async function GET(req: NextRequest) {
-  try {
-
-    const { searchParams } = new URL(req.url);
-    const collectionId = searchParams.get('collection_id');
-    const status = searchParams.get('status');
-    const externalReference = searchParams.get('external_reference');
-    const paymentId = searchParams.get('payment_id');
-
-
-    if (!collectionId || !status || !externalReference || !paymentId) {
-      console.error('Parâmetros ausentes:', { collectionId, status, externalReference, paymentId });
-      return NextResponse.json({ error: 'Parâmetros ausentes.' }, { status: 400 });
-    }
-
-
-    let parsedReference;
-    try {
-      parsedReference = JSON.parse(decodeURIComponent(externalReference));
-      console.log('Dados decodificados de external_reference:', parsedReference);
-    } catch (error) {
-      console.error('Erro ao processar external_reference:', error);
-      return NextResponse.json({ error: 'Erro ao processar external_reference.' }, { status: 400 });
-    }
-
-    const { nome, telefone, data_hora, empresaId, userId } = parsedReference;
-
-
-    console.log('Dados extraídos:', { nome, telefone, data_hora, empresaId,  userId });
-
-    if (!nome || !telefone || !data_hora || !empresaId  || !userId) {
-      console.error('Dados de referência externa inválidos:', { nome, telefone, data_hora, empresaId,  userId });
-      return NextResponse.json({ error: 'Dados de referência externa inválidos.' }, { status: 400 });
-    }
-
+  const { searchParams } = new URL(req.url);
   
-    const existingAgendamento = await query(
-      'SELECT * FROM agendamentos WHERE payment_id = ?',
-      [paymentId]
+  const empresa_id = searchParams.get('empresa_id'); // Obtendo empresa_id
+  const plano = searchParams.get('plano'); // Obtendo plano
+  let planoValor: string;
+  let dataFimAssinatura = new Date();
+
+  try {
+    // Verifique se todos os parâmetros necessários estão presentes
+    if (!empresa_id || !plano) {
+      return NextResponse.json({ error: 'Parâmetros ausentes. PLANO OU EMPRESA ID.' }, { status: 400 });
+    }
+
+    switch (plano) {
+      case 'mensal':
+        planoValor = 'Mensal';
+        dataFimAssinatura.setMonth(dataFimAssinatura.getMonth() + 1);
+        break;
+      case 'trimestral':
+        planoValor = 'Trimestral';
+        dataFimAssinatura.setMonth(dataFimAssinatura.getMonth() + 3);
+        break;
+      case 'anual':
+        planoValor = 'Anual';
+        dataFimAssinatura.setFullYear(dataFimAssinatura.getFullYear() + 1);
+        break;
+      default:
+        return NextResponse.json({ error: 'Plano inválido. Atualização de assinatura não realizada.' }, { status: 400 });
+    }
+
+    await execute(
+      `UPDATE empresas 
+       SET assinatura_ativa = 1, 
+           plano = ?, 
+           data_fim_assinatura = ? 
+       WHERE id = ?`,
+      [planoValor, dataFimAssinatura.toISOString().slice(0, 19).replace('T', ' '), empresa_id]
     );
 
-    if (existingAgendamento.length > 0) {
-      console.log('Agendamento já processado:', existingAgendamento);
-      return NextResponse.json({ message: 'Agendamento já processado.' }, { status: 200 });
-    }
-
-  
-    try {
-      const result = await query(
-        'INSERT INTO agendamentos (empresa_id, nome, telefone,  data_hora, payment_id, status, user_id) VALUES ( ?, ?, ?, ?, ?, ?, ?)',
-        [empresaId, nome, telefone,  data_hora, paymentId, status, userId]
-      );
-
-      console.log('Agendamento inserido com sucesso:', result);
-      return NextResponse.json({ message: 'Agendamento inserido com sucesso!', result }, { status: 201 });
-    } catch (error) {
-      console.error('Erro ao inserir o agendamento:', error);
-      return NextResponse.json({ error: 'Erro ao inserir o agendamento.' }, { status: 500 });
-    }
-
+    return NextResponse.json({ message: 'Atualização de assinatura realizada com sucesso!' }, { status: 200 });
   } catch (error) {
-    console.error('Erro ao processar a requisição:', error);
-    return NextResponse.json({ error: 'Erro ao processar a requisição.' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao atualizar assinatura.' }, { status: 500 });
   }
 }

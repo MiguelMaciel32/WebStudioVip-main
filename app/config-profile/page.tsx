@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // Para redirecionamento
+import { useRouter } from 'next/navigation'; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { Trash2, User, PencilIcon } from 'lucide-react';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from '@/components/ui/use-toast';
 import { ImagePlus, X } from "lucide-react";
+import  Assinatura from '../../components/assinatura';
 
 interface Servico {
   id: number;
@@ -32,10 +33,46 @@ export default function ConfigurarEmpresa() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false); 
+  const [isPaid, setIsPaid] = useState<boolean | null>(null);
+  
 
   const templateBusiness = '/foto.jpg'; 
 
   const router = useRouter(); 
+
+  const verificarPagamento = async () => {
+    try {
+      const token = sessionStorage.getItem('token_empresa');
+      console.log(token);
+
+      if (!token) {
+        toast({ title: 'Você precisa estar logado para acessar esta página.' });
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch('/api/assinatura', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao verificar status de pagamento');
+      }
+
+      const data = await response.json();
+      setIsPaid(data.isActive);
+    } catch (error) {
+      console.error(error);
+      toast({ title: 'Erro ao verificar status de pagamento.' });
+    }
+  };
+  useEffect(() => {
+    verificarPagamento();
+  }, []);
+  
 
   const carregarDadosEmpresa = async () => {
     try {
@@ -194,7 +231,7 @@ export default function ConfigurarEmpresa() {
       const file = event.target.files[0];
       setSelectedFile(file);
       setImagePreview(URL.createObjectURL(file));
-      setIsConfirming(true); // Inicia a confirmação da imagem
+      setIsConfirming(true);
     } else {
       setSelectedFile(null);
       setImagePreview(null);
@@ -357,6 +394,13 @@ export default function ConfigurarEmpresa() {
       console.error("Erro ao fazer upload:", error);
     }
   };
+
+  if (isPaid === false) {
+    return (
+      <Assinatura></Assinatura>
+    );
+  }
+  
 
   return (
     <div className="container mx-auto p-4 space-y-6">

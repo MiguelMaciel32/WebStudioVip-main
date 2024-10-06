@@ -1,126 +1,78 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { query } from '../../../lib/db';
+// /Users/user/Documents/Web/app/api/feedback/route.ts
+
+import { NextResponse } from 'next/server';
+import mercadopago from 'mercadopago';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'luismiguel';
+const JWT_SECRET = process.env.JWT_SECRET || 'luismiguel-empresa';
 
-export async function POST(req: NextRequest) {
-  try {
-    console.log('Início da execução da função POST');
-
-    // Verificação e extração do token JWT
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('Token não encontrado ou formato inválido.');
-      return NextResponse.json({ error: 'Token não encontrado ou formato inválido.' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    let userId: number;
+export async function GET(request: Request) {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
-      userId = decoded.userId;
-      console.log('User ID extraído do token:', userId);
+        const url = new URL(request.url);
+        const externalReference = url.searchParams.get('external_reference');
+        const paymentId = url.searchParams.get('payment_id');
+
+        if (paymentId) {
+            const paymentResponse = await mercadopago.payment.get(paymentId as any);
+
+            if (paymentResponse) {
+                console.log('Detalhes do pagamento:', JSON.stringify(paymentResponse, null, 2));
+                const paymentStatus = paymentResponse.body.status;  // Status do pagamento
+                const statusDetail = paymentResponse.body.status_detail;  // Detalhes do status
+
+                if (paymentStatus === 'approved') {
+                    return NextResponse.json({ success: true, message: 'Pagamento aprovado!', data: paymentResponse });
+                } else {
+                    console.log(`Pagamento não aprovado: ${statusDetail}`);
+                    return NextResponse.json({ success: false, message: `Pagamento não aprovado: ${statusDetail}`, data: paymentResponse });
+                }
+            }
+        }
+
+        if (externalReference) {
+            const decodedReference = decodeURIComponent(externalReference);
+            const parsedReference = JSON.parse(decodedReference);
+
+            console.log('Dados de referência externa:', parsedReference);
+
+            if (parsedReference) {
+                return NextResponse.json({ success: true, data: parsedReference });
+            } else {
+                console.error('Dados de referência externa inválidos:', parsedReference);
+                return NextResponse.json({ error: 'Dados de referência externa inválidos.' }, { status: 400 });
+            }
+        } else {
+            console.error('External reference não encontrado na URL');
+            return NextResponse.json({ error: 'External reference não encontrado na URL.' }, { status: 400 });
+        }
     } catch (error) {
-      console.error('Erro ao decodificar o token:', error);
-      return NextResponse.json({ error: 'Erro ao processar o token.' }, { status: 401 });
+        console.error('Erro ao processar o feedback:', error);
+        return NextResponse.json({ error: 'Erro ao processar o feedback.' }, { status: 500 });
     }
+}
 
-    // Recebendo e processando o corpo da requisição
-    const body = await req.json();
-    console.log('Corpo da requisição recebido:', body);
-
-    const { collection_id, collection_status, payment_id, status, external_reference } = body;
-    console.log('ID do pagamento:', payment_id);
-    console.log('Status do pagamento:', status);
-    console.log('ID do pedido do comerciante:', collection_id);
-
-    if (status !== 'approved') {
-      console.log('Pagamento não aprovado.');
-      return NextResponse.json({ error: 'Pagamento não aprovado.' }, { status: 400 });
-    }
-
-    // Extraindo dados do external_reference
-    let nome: string, telefone: string, dataHora: string, empresaId: number, servico: string, precoServico: number;
+// Implementação do webhook para receber notificações do Mercado Pago
+export async function NOTIFICATIONS(request: Request) {
     try {
-      if (external_reference) {
-        const parsedReference = JSON.parse(external_reference);
-        nome = parsedReference.nome;
-        telefone = parsedReference.telefone;
-        dataHora = parsedReference.data_hora;
-        empresaId = parsedReference.empresaId;
-        servico = parsedReference.servico || ''; // Adicionando valor padrão para 'servico'
-        precoServico = parseFloat(parsedReference.precoServico) || 0; // Adicionando valor padrão para 'precoServico'
-      } else {
-        console.error('external_reference está nulo.');
-        return NextResponse.json({ error: 'Dados de referência externa ausentes.' }, { status: 400 });
-      }
+        const body = await request.json();
+        console.log('Webhook recebido:', JSON.stringify(body, null, 2));
+
+        if (body.type === 'payment') {
+            const payment = body.data;
+            const paymentStatus = payment.status;
+            const statusDetail = payment.status_detail;
+
+            if (paymentStatus === 'approved') {
+                console.log('Pagamento aprovado:', payment);
+                // Aqui você pode atualizar seu banco de dados ou realizar outras ações necessárias
+            } else {
+                console.log(`Pagamento não aprovado: ${statusDetail}`);
+            }
+        }
+
+        return NextResponse.json({ success: true });
     } catch (error) {
-      console.error('Erro ao deserializar external_reference:', error);
-      return NextResponse.json({ error: 'Erro ao processar dados de referência externa.' }, { status: 400 });
+        console.error('Erro ao processar o webhook:', error);
+        return NextResponse.json({ error: 'Erro ao processar o webhook.' }, { status: 500 });
     }
-
-    console.log('Dados extraídos do external_reference:', { nome, telefone, dataHora, empresaId, servico, precoServico });
-
-    // Validação dos campos obrigatórios
-    if (!empresaId || !dataHora || !nome || !telefone || !servico || isNaN(precoServico)) {
-      console.log('Campos obrigatórios ausentes.');
-      return NextResponse.json({ error: 'Campos obrigatórios ausentes.' }, { status: 400 });
-    }
-
-    // Verificação se a data do agendamento está no passado
-    const agendamentoDataDate = new Date(dataHora);
-    const dataAtual = new Date();
-
-    if (agendamentoDataDate < dataAtual) {
-      console.log('Data do agendamento está no passado.');
-      return NextResponse.json({ error: 'Não é possível agendar para uma data no passado.' }, { status: 400 });
-    }
-
-    // Verificação se o horário já está ocupado
-    console.log('Verificando se o horário já está ocupado...');
-    const existingAgendamento = await query(
-      'SELECT * FROM agendamentos WHERE empresa_id = ? AND data_hora = ?',
-      [empresaId, dataHora]
-    );
-
-    console.log('Resultado da verificação de agendamentos existentes:', existingAgendamento);
-
-    if (existingAgendamento.length > 0) {
-      console.log('Este horário já está ocupado.');
-      return NextResponse.json({ error: 'Este horário já está ocupado.' }, { status: 409 });
-    }
-
-    // Inserção dos dados no banco de dados
-    console.log('Preparando dados para inserção...');
-    console.log({
-      empresa_id: empresaId,
-      user_id: userId,
-      data_hora: dataHora,
-      servico,
-      nome,
-      telefone,
-      preco_servico: precoServico,
-      payment_id,
-      status: 'pendente'
-    });
-
-    try {
-      const result = await query(
-        'INSERT INTO agendamentos (empresa_id, user_id, data_hora, servico, nome, telefone, preco_servico, payment_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [empresaId, userId, dataHora, servico, nome, telefone, precoServico, payment_id, 'pendente']
-      );
-
-      console.log('Resultado da inserção:', result);
-      return NextResponse.json({ message: 'Agendamento realizado com sucesso!', result }, { status: 201 });
-
-    } catch (insertError) {
-      console.error('Erro ao inserir o agendamento:', insertError);
-      return NextResponse.json({ error: 'Erro ao inserir o agendamento.' }, { status: 500 });
-    }
-
-  } catch (error) {
-    console.error('Erro ao processar o feedback:', error);
-    return NextResponse.json({ error: 'Erro ao processar o feedback.' }, { status: 500 });
-  }
 }

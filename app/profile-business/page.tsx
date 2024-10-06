@@ -1,5 +1,3 @@
-// app/profile-business/page.tsx
-
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -13,7 +11,8 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { toast } from '@/components/ui/use-toast';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import SalesChart from '@/components/SalesChart'; // Importando o componente SalesChart
+import SalesChart from '@/components/SalesChart'; 
+import  Assinatura from '../../components/assinatura';
 
 interface Profile {
   id: string;
@@ -39,6 +38,7 @@ export default function Page() {
   const [newAbout, setNewAbout] = useState<string>('');
   const [newContact, setNewContact] = useState<string>('');
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const [isPaid, setIsPaid] = useState<boolean | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -200,13 +200,53 @@ export default function Page() {
         ...prevProfile,
         about: newAbout,
         contact: newContact,
-      }) as Profile); // Assegura que o tipo retornado é Profile
+      }) as Profile);
       setIsEditing(false);
       toast({ title: 'Perfil atualizado com sucesso!' });
     } else {
       toast({ title: data.error || 'Erro ao atualizar perfil.' });
     }
   };
+
+  const verificarPagamento = async () => {
+    try {
+      const token = sessionStorage.getItem('token_empresa');
+      console.log(token);
+
+      if (!token) {
+        toast({ title: 'Você precisa estar logado para acessar esta página.' });
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch('/api/assinatura', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao verificar status de pagamento');
+      }
+
+      const data = await response.json();
+      setIsPaid(data.isActive);
+    } catch (error) {
+      console.error(error);
+      toast({ title: 'Erro ao verificar status de pagamento.' });
+    }
+  };
+  useEffect(() => {
+    verificarPagamento();
+  }, []);
+
+
+  if (isPaid === false) {
+    return (
+      <Assinatura></Assinatura>
+    );
+  }
 
   return(
     <div className="flex min-h-screen flex-col bg-muted/40">

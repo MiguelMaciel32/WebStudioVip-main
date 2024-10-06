@@ -39,9 +39,10 @@ const validarTelefone = (telefone: string): boolean => {
     return telefone.length === 11;
 };
 
-// Função principal que lida com a requisição POST
+
 export async function POST(request: NextRequest) {
     const { nomeEmpresa, cnpj, email, telefone, senha, address, cep, estado, cidade } = await request.json();
+    let plano = 'gratuito'
 
     // Verificação dos campos obrigatórios
     if (!nomeEmpresa || !cnpj || !email || !telefone || !senha || !address || !cep || !estado || !cidade) {
@@ -61,9 +62,9 @@ export async function POST(request: NextRequest) {
     // Tentativa de inserção no banco de dados
     try {
         const result = await query(`
-          INSERT INTO empresas (nome_empresa, cnpj, email, telefone, senha, address, cep, estado, cidade)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [nomeEmpresa, cnpj, email, telefone, senha, address, cep, estado, cidade]);
+          INSERT INTO empresas (nome_empresa, cnpj, email, telefone, senha, address, cep, estado, cidade,  assinatura_ativa, plano)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+        `, [nomeEmpresa, cnpj, email, telefone, senha, address, cep, estado, cidade, plano]);
 
         return NextResponse.json({ success: 'Empresa cadastrada com sucesso!' });
     } catch (error) {

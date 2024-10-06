@@ -15,27 +15,20 @@ export default function PaymentSuccess() {
 
   useEffect(() => {
     async function handlePaymentSuccess() {
-      const collectionId = searchParams.get('collection_id');
-      const status = searchParams.get('status');
-      const externalReference = searchParams.get('external_reference');
-      const paymentId = searchParams.get('payment_id');
+      const sessionId = searchParams.get('session_id');
+      const empresaId = searchParams.get('empresa_id'); // Obtém o ID da empresa da URL
+      const plano = searchParams.get('plano'); // Obtém o plano da URL
 
-      if (!collectionId || !status || !paymentId || !externalReference) {
+      // Verifica se todos os parâmetros necessários estão presentes
+      if (!sessionId || !empresaId || !plano) {
         setError('Parâmetros ausentes.');
         setLoading(false);
         return;
       }
 
-      if (status !== 'approved') {
-        setError('O pagamento não foi aprovado.');
-        setLoading(false);
-        return;
-      }
-
       try {
-        const encodedExternalReference = encodeURIComponent(externalReference);
-
-        const url = `/api/suce?collection_id=${collectionId}&status=${status}&external_reference=${encodedExternalReference}&payment_id=${paymentId}`;
+        // Chama a API para processar o pagamento e atualizar a assinatura
+        const url = `/api/suce?empresa_id=${empresaId}&plano=${plano}`; // A URL agora inclui empresa_id e plano
 
         const response = await fetch(url, {
           method: 'GET',
@@ -47,9 +40,9 @@ export default function PaymentSuccess() {
         const data = await response.json();
 
         if (response.ok) {
-          setMessage('Agendamento realizado com sucesso!');
+          setMessage('Estamos felizes por você ter confiado na StudioVip! Agora você é um assinante e estamos ansiosos para proporcionar a melhor experiência possível.');
         } else {
-          setError(data.error || 'Erro ao realizar agendamento.');
+          setError(data.error || 'Erro ao realizar atualização da sua assinatura.');
         }
       } catch (err) {
         setError('Erro ao se comunicar com a API.');

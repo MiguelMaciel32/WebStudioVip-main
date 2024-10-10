@@ -1,3 +1,4 @@
+'use client'
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import {
@@ -29,6 +30,8 @@ import {
 } from "@/components/ui/navigation-menu"
 import Link from "next/link";
 import AssinaturaComponent from "../components/assinatura";
+import listchat from "../components/listchat";
+import Agenda from "../components/listchat";
 
 export default function Home() {
   return (

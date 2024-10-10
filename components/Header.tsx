@@ -14,7 +14,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Settings, User, LogOut, ShoppingCart } from "lucide-react"
-import Compras from '@/components/compras';;
+import Compras from '@/components/compras';
+import Agenda from "../components/listchat"; 
+import {  MoreVertical, Mic, Send, MessageCircle } from 'lucide-react'
 
 const templateClient = '/foto.jpg';  
 const templateBusiness = '/foto.jpg';
@@ -58,7 +60,6 @@ export default function Header() {
     const savedProfilePicture = sessionStorage.getItem('profilePicture');  
     const savedProfileBusiness = sessionStorage.getItem('profileBusiness'); 
 
-
     if (token && !token_empresa) {
       setIsLoggedIn(true);
       setIsLoggedInEmpresa(false); 
@@ -98,60 +99,69 @@ export default function Header() {
 
   return (
     <header className="border-b px-4 py-2 bg-background/80 backdrop-blur flex items-center sticky top-0 z-50">
-    <Link href="/" className="flex-1">
-      <h1 className="text-lg font-bold select-none cursor-pointer">
-        StudioVip
-      </h1>
-    </Link>
-    <nav className="flex gap-4 items-center">
-      <ModeToggle />
+      <Link href="/" className="flex-1">
+        <h1 className="text-lg font-bold select-none cursor-pointer">
+          StudioVip
+        </h1>
+      </Link>
+      <nav className="flex gap-4 items-center">
+        <ModeToggle />
 
-      {(isLoggedIn || isLoggedInEmpresa) ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-12 w-12 rounded-full p-0">
-              <Image
-                src={imageUrl}
-                alt="Foto de perfil"
-                width={48}
-                height={48}
-                className="rounded-full object-cover"
-              />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuItem asChild>
-              <Link href={isLoggedInEmpresa ? "/profile-business" : "/profile"} className="flex items-center">
-                <User className="mr-2 h-4 w-4" />
-                <span>Perfil</span>
-              </Link>
-            </DropdownMenuItem>
-            {isLoggedInEmpresa && (
+        {(isLoggedIn || isLoggedInEmpresa) ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-12 w-12 rounded-full p-0">
+                <Image
+                  src={imageUrl}
+                  alt="Foto de perfil"
+                  width={48}
+                  height={48}
+                  className="rounded-full object-cover"
+                />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuItem asChild>
-                <Link href="/config-profile" className="flex items-center">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configurações</span>
+                <Link href={isLoggedInEmpresa ? "/profile-business" : "/profile"} className="flex items-center">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Perfil</span>
                 </Link>
               </DropdownMenuItem>
-            )}
-            {isLoggedIn && (
-              <DropdownMenuItem asChild>
-                 <Compras />
+              {isLoggedInEmpresa && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href="/config-profile" className="flex items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Configurações</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                  <Link href="/chat2" className="flex items-center">
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      <span>Chat</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+              {isLoggedIn && (
+                <DropdownMenuItem asChild>
+                  <Compras />
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={isLoggedInEmpresa ? handleLogoutEmpresa : handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sair da conta</span>
               </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={isLoggedInEmpresa ? handleLogoutEmpresa : handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Sair da conta</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : (
-        <Link href="/login">
-          <Button variant="outline">Login</Button>
-        </Link>
-      )}
-    </nav>
-  </header>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Link href="/login">
+            <Button variant="outline">Login</Button>
+          </Link>
+        )}
+      </nav>
+    </header>
   );
 }

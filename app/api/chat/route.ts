@@ -18,10 +18,11 @@ export async function GET(request: NextRequest) {
       )`, [agendamento_id]);
 
     const mensagens = await query(`
-      SELECT id, agendamento_id, user_id, mensagem, data_hora
-      FROM mensagens
-      WHERE agendamento_id = ?
-      ORDER BY data_hora ASC`, [agendamento_id]);
+         SELECT a.id, a.data_hora, a.servico, u.name as cliente, u.contact as email
+      FROM agendamentos a
+      JOIN users u ON a.user_id = u.id
+      WHERE a.empresa_id = ?
+      ORDER BY a.data_hora DESC`, [agendamento_id]);
 
     if (!user.length) {
       return NextResponse.json({ error: 'Usuário não encontrado.' }, { status: 404 });

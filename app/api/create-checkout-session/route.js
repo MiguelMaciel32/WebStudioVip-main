@@ -1,18 +1,24 @@
 import Stripe from 'stripe';
 import jwt from 'jsonwebtoken';
-import { NextResponse } from 'next/server'; 
+import { NextResponse } from 'next/server';
 
 const JWT_SECRET = 'luismiguel-empresa';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+
+// Verifica se a chave secreta do Stripe está sendo carregada corretamente
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error("A chave secreta do Stripe não foi definida.");
+}
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2022-08-01', // Defina a versão da API aqui
 });
-
 
 export async function POST(req) {
   try {
     // Obter o token de autorização do cabeçalho da requisição
-    const token = req.headers.get('Authorization')?.split(' ')[1]; 
-    const body = await req.json(); 
+    const token = req.headers.get('Authorization')?.split(' ')[1];
+    const body = await req.json();
     const { plano } = body; // Extrai o plano do corpo da requisição
     console.log(plano);
 
@@ -34,35 +40,35 @@ export async function POST(req) {
     let priceId;
     switch (plano) {
       case 'mensal':
-        priceId = 'price_1Q6laRJz7RrfV8r9YqzJo0o7'; 
+        priceId = 'price_1Q6laRJz7RrfV8r9YqzJo0o7';
         break;
       case 'trimestral':
-        priceId = 'price_1Q6lZRJz7RrfV8r9sfphzrlF'; 
+        priceId = 'price_1Q6lZRJz7RrfV8r9sfphzrlF';
         break;
       case 'anual':
-        priceId = 'price_1Q6laRJz7RrfV8r9YqzJo0o7'; 
+        priceId = 'price_1Q6laRJz7RrfV8r9YqzJo0o7';
         break;
       default:
-        return new Response(JSON.stringify({ error: "Plano inválido." }), { status: 400 });
+        return NextResponse.json({ error: "Plano inválido." }, { status: 400 });
     }
 
- 
+    // Criação da sessão de checkout no Stripe
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
-          price: priceId, 
+          price: priceId,
           quantity: 1,
         },
       ],
-      mode: 'subscription', 
-      success_url: `${process.env.NEXT_PUBLIC_URL}/sucesso?session_id={CHECKOUT_SESSION_ID}&empresa_id=${userId}&plano=${plano}`, 
+      mode: 'subscription',
+      success_url: `${process.env.NEXT_PUBLIC_URL}/sucesso?session_id={CHECKOUT_SESSION_ID}&empresa_id=${userId}&plano=${plano}`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/cancel`, // URL de cancelamento
     });
 
-
-    return new Response(JSON.stringify({ url: session.url }), { status: 200 });
+    // Retorna a URL de checkout para o cliente
+    return NextResponse.json({ url: session.url }, { status: 200 });
   } catch (err) {
     console.error("Erro ao criar sessão de checkout:", err); // Log do erro
-    return new Response(JSON.stringify({ error: "Erro ao criar sessão de checkout." }), { status: 500 });
+    return NextResponse.json({ error: "Erro ao criar sessão de checkout." }, { status: 500 });
   }
 }

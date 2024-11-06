@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'CNPJ inválido.' }, { status: 400 });
     }
 
-    // Validação do telefone
+    // Validação do telefones
     if (!validarTelefone(telefone)) {
         return NextResponse.json({ error: 'Número de telefone inválido.' }, { status: 400 });
     }

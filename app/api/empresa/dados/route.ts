@@ -1,6 +1,9 @@
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { query } from '../../../../lib/db';
 import jwt from 'jsonwebtoken';
+
 
 interface Empresa {
   id: number;

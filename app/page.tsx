@@ -1,24 +1,27 @@
 'use client'
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
+
+import { useEffect } from "react"
+import { driver } from "driver.js"
+import "driver.js/dist/driver.css"
+import { Button } from "@/components/ui/button"
+import Image from "next/image"
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SparkleIcon, Sparkles, StarsIcon } from "lucide-react";
+} from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { SparkleIcon, Sparkles, StarsIcon, Mail } from "lucide-react"
 import {
   Carousel,
   CarouselContent,
   CarouselNext,
   CarouselPrevious,
   CarouselItem,
-} from "@/components/ui/carousel";
-import SearchInputWithIcon from "@/components/Input-Icon";
-import { Mail } from "lucide-react";
+} from "@/components/ui/carousel"
+import SearchInputWithIcon from "@/components/Input-Icon"
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -28,17 +31,34 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
-import Link from "next/link";
-import AssinaturaComponent from "../components/assinatura";
-import listchat from "../components/listchat";
-import Agenda from "../components/listchat";
+import Link from "next/link"
+import AssinaturaComponent from "../components/assinatura"
+import listchat from "../components/listchat"
+import Agenda from "../components/listchat"
 
 export default function Home() {
+  useEffect(() => {
+    const driverObj = driver({
+      showProgress: true,
+      steps: [
+        { element: '#hero', popover: { title: 'Bem-vindo ao Studio Vip', description: 'Aqui você pode gerenciar seu negócio de beleza com facilidade.' } },
+        { element: '#start-journey', popover: { title: 'Comece sua jornada', description: 'Clique aqui para criar sua conta e começar a usar o Studio Vip.' } },
+        { element: '#online-scheduling', popover: { title: 'Agendamento Online', description: 'Gerencie seus agendamentos de forma fácil e eficiente.' } },
+        { element: '#virtual-store', popover: { title: 'Loja Virtual', description: 'Venda seus produtos online e aumente sua receita.' } },
+        { element: '#financial-control', popover: { title: 'Controle Financeiro', description: 'Mantenha suas finanças organizadas e declare seu imposto de renda.' } },
+        { element: '#integrated-marketing', popover: { title: 'Marketing Integrado', description: 'Crie materiais promocionais e anúncios para impulsionar seu negócio.' } },
+        { element: '#help-section', popover: { title: 'Precisa de ajuda?', description: 'Entre em contato conosco se tiver alguma dúvida.' } },
+      ]
+    })
+
+    driverObj.drive()
+  }, [])
+
   return (
     <>
       <main className="flex flex-col">
         <section className="w-full py-12 md:py-24 lg:py-1">
-          <section className="container grid items-center gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px]">
+          <section id="hero" className="container grid items-center gap-6 lg:grid-cols-[1fr_500px] lg:gap-12 xl:grid-cols-[1fr_550px]">
             <Image
               alt="Hero"
               className="mx-auto aspect-square overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
@@ -57,7 +77,7 @@ export default function Home() {
                 experiência do cliente.
               </h5>
               <Link href="/products">
-                <Button className="w-full md:w-fit gap-2 mt-4 items-center">
+                <Button id="start-journey" className="w-full md:w-fit gap-2 mt-4 items-center">
                   <Sparkles size={16} />
                   Inicie sua jornada!
                 </Button>
@@ -66,7 +86,7 @@ export default function Home() {
           </section>
           <section>
           </section>
-          <section className="grid mt-40 mx-9 grid-cols-1 md:grid-cols-2">
+          <section id="online-scheduling" className="grid mt-40 mx-9 grid-cols-1 md:grid-cols-2">
             <Image
               className="rounded-lg shadow-md aspect-video"
               alt="Cabelos Image Maquiagem Agendamento"
@@ -114,7 +134,7 @@ export default function Home() {
           </section>
 
           <section className="grid grid-cols-1 place-items-center md:flex lg:flex items-center justify-center mt-12 mx-9 gap-6 ">
-            <Card className="w-80">
+            <Card id="virtual-store" className="w-80">
               <CardHeader>
                 <SparkleIcon />
                 <CardTitle>Loja Virtual</CardTitle>
@@ -144,7 +164,7 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="w-80">
+            <Card id="financial-control" className="w-80">
               <CardHeader>
                 <SparkleIcon />
                 <CardTitle>Controle Financeiro</CardTitle>
@@ -159,7 +179,7 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <Card className="w-80">
+            <Card id="integrated-marketing" className="w-80">
               <CardHeader>
                 <SparkleIcon />
                 <CardTitle>Marketing Integrado</CardTitle>
@@ -174,7 +194,7 @@ export default function Home() {
               </CardContent>
             </Card>
           </section>
-          <section className="flex justify-center px-6 mt-10">
+          <section id="help-section" className="flex justify-center px-6 mt-10">
             <h1 className="font-bold text-2xl text-center">
               Alguma dúvida? Nós te ajudamos!
             </h1>
@@ -189,5 +209,5 @@ export default function Home() {
         </section>
       </main>
     </>
-  );
+  )
 }

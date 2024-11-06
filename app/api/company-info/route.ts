@@ -6,7 +6,7 @@ export async function GET() {
     console.log('Iniciando consulta ao banco de dados...');
     
     // Execute a consulta para obter a empresa com o ID específico
-    const results = await query('SELECT * FROM companies WHERE id = ?', [1]); // Substitua '1' pelo ID real ou lógica apropriada
+    const results = await query('SELECT * FROM empresas WHERE id = ?', [1]); // Substitua '1' pelo ID real ou lógica apropriada
 
     console.log('Resultado da consulta:', results);
 

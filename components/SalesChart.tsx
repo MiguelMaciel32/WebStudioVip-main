@@ -30,26 +30,25 @@ export default function SalesChart({ className }: SalesChartProps) {
             'Authorization': `Bearer ${token_empresa}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({}), // Enviando um corpo vazio
+          body: JSON.stringify({}), 
         });
 
-        // Verifica a resposta
+      
         console.log('Resposta da requisição:', response);
 
         const data = await response.json();
 
         if (response.ok) {
-          // Transformar dados de agendamentos em contagem mensal
+
           const monthlyCounts = countAgendamentosPorMes(data.data);
           
-          // Atualiza o estado com os dados transformados
           setSalesData(monthlyCounts);
         } else {
-          toast({ title: data.error || 'Erro ao carregar dados de vendas.' });
+      
         }
       } catch (error) {
         console.error('Erro ao buscar dados de vendas:', error);
-        toast({ title: 'Erro ao buscar dados de vendas.' });
+
       } finally {
         setLoading(false);
       }
@@ -62,7 +61,6 @@ export default function SalesChart({ className }: SalesChartProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Função para contar agendamentos por mês
   const countAgendamentosPorMes = (data: { agendamento_id: number; data_hora: string }[]) => {
     const monthlyCount: { [key: string]: number } = {};
     
@@ -77,32 +75,30 @@ export default function SalesChart({ className }: SalesChartProps) {
       const month = date.getUTCMonth(); // Mês em formato 0-11
       const year = date.getUTCFullYear(); // Ano
 
-      const monthYearKey = `${monthNames[month]} ${year}`; // Ex: "Outubro 2024"
-
-      // Inicializa a contagem se ainda não existir
+      const monthYearKey = `${monthNames[month]} ${year}`; 
       if (!monthlyCount[monthYearKey]) {
         monthlyCount[monthYearKey] = 0;
       }
 
-      monthlyCount[monthYearKey]++; // Incrementa a contagem
+      monthlyCount[monthYearKey]++; 
     });
 
-    // Adiciona meses sem dados como zero
+
     const allMonths = monthNames.map((month: string, index: number) => {
-      const monthYearKey = `${month} ${new Date().getUTCFullYear()}`; // Para o ano atual
+      const monthYearKey = `${month} ${new Date().getUTCFullYear()}`; 
       return {
         monthYearKey,
-        count: monthlyCount[monthYearKey] || 0 // Define como 0 se não existir
+        count: monthlyCount[monthYearKey] || 0 
       };
     });
 
-    // Converte o objeto em um formato adequado para o gráfico
+
     const formattedData = allMonths.map(month => ({
       x: month.monthYearKey,
       y: month.count,
     }));
 
-    // Retorna o formato esperado pelo gráfico
+
     return [
       {
         id: 'Agendamentos',

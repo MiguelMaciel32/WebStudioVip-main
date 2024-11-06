@@ -36,7 +36,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Token inválido.' }, { status: 401 });
     }
 
-    // Determina o priceId baseado no plano selecionado
+    // Determina o priceId baseado no plano selecionadoa
     let priceId;
     switch (plano) {
       case 'mensal':

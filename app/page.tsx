@@ -41,7 +41,7 @@ export default function Home() {
     const driverObj = driver({
       showProgress: true,
       steps: [
-        { element: '#hero', popover: { title: 'Bem-vindo ao Studio Vip', description: 'Aqui você pode gerenciar seu negócio de beleza com facilidade.' } },
+        { element: '#hero', popover: { title: 'Bem-vindo ao Studio Vip', description: 'Aqui você pode achar saloes para sua beleza com facilidade.' } },
         { element: '#start-journey', popover: { title: 'Comece sua jornada', description: 'Clique aqui para criar sua conta e começar a usar o Studio Vip.' } },
         { element: '#online-scheduling', popover: { title: 'Agendamento Online', description: 'Gerencie seus agendamentos de forma fácil e eficiente.' } },
         { element: '#virtual-store', popover: { title: 'Loja Virtual', description: 'Venda seus produtos online e aumente sua receita.' } },

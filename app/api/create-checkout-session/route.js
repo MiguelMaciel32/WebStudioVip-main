@@ -1,9 +1,12 @@
 import Stripe from 'stripe';
 import jwt from 'jsonwebtoken';
-import { NextResponse } from 'next/server'; // Importar NextResponse para criar respostas da API
+import { NextResponse } from 'next/server'; 
 
 const JWT_SECRET = 'luismiguel-empresa';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); // Inicializa a biblioteca Stripe com a chave secreta
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2022-08-01', // Defina a versão da API aqui
+});
+
 
 export async function POST(req) {
   try {

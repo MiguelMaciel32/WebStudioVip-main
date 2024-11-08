@@ -37,8 +37,8 @@ export default function TechPulseChat() {
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAgendamento, setSelectedAgendamento] = useState<Agendamento | null>(null);
+  const [companyUserId, setCompanyUserId] = useState<number | null>(null);
   const router = useRouter();
-
 
   useEffect(() => {
     const fetchAgendamentos = async () => {
@@ -72,6 +72,34 @@ export default function TechPulseChat() {
     };
 
     fetchAgendamentos();
+
+    // Fetch company user ID
+    const fetchCompanyUserId = async () => {
+      try {
+        const token_empresa = sessionStorage.getItem("token_empresa");
+        if (!token_empresa) {
+          router.push('/login');
+          return;
+        }
+
+        const response = await fetch("/api/company-user-id", {
+          headers: {
+            Authorization: `Bearer ${token_empresa}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch company user ID');
+        }
+
+        const data = await response.json();
+        setCompanyUserId(data.userId);
+      } catch (error) {
+        console.error('Error fetching company user ID:', error);
+      }
+    };
+
+    fetchCompanyUserId();
   }, [router]);
 
   const fetchChatData = async (agendamento: Agendamento) => {
@@ -82,8 +110,8 @@ export default function TechPulseChat() {
         return;
       }
 
-      setSelectedAgendamento(agendamento); // Atualiza o agendamento selecionado
-      setMessages([]); // Limpa mensagens ao selecionar um novo agendamento
+      setSelectedAgendamento(agendamento);
+      setMessages([]);
 
       const response = await fetch(`/api/chat?id=${agendamento.id}`, {
         headers: {
@@ -99,21 +127,20 @@ export default function TechPulseChat() {
 
       const data = await response.json();
       setUser(data.user);
-      setMessages(data.mensagens); // Carrega mensagens ao selecionar o agendamento
+      setMessages(data.mensagens);
     } catch (error) {
       console.error('Erro ao buscar dados do chat:', error);
     }
   };
 
-  // Função para enviar uma nova mensagem
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (newMessage.trim() && user && selectedAgendamento) {
+    if (newMessage.trim() && companyUserId && selectedAgendamento) {
       const message: Message = {
         id: messages.length + 1,
         agendamento_id: selectedAgendamento.id,
-        user_id: user.id,
+        user_id: companyUserId,
         mensagem: newMessage,
         data_hora: new Date().toISOString(),
       };
@@ -156,7 +183,6 @@ export default function TechPulseChat() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar de agendamentos */}
       <div className="w-1/3 bg-white border-r">
         <div className="p-4">
           <Input
@@ -195,7 +221,6 @@ export default function TechPulseChat() {
         </div>
       </div>
 
-
       <div className="flex-1 flex flex-col">
         <header className="bg-white p-4 flex items-center justify-between border-b">
           <div className="flex items-center">
@@ -209,13 +234,16 @@ export default function TechPulseChat() {
           </div>
 
           {messages.map((message) => (
-            <div key={message.id} className={`flex ${message.user_id === user?.id ? "justify-end" : "justify-start"}`}>
-              <div className={`flex ${message.user_id === user?.id ? "flex-row-reverse" : "flex-row"} items-end`}>
+            <div key={message.id} className={`flex ${message.user_id === companyUserId ? "justify-end" : "justify-start"}`}>
+              <div className={`flex ${message.user_id === companyUserId ? "flex-row-reverse" : "flex-row"} items-end`}>
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.profile_picture || "/placeholder.svg?height=32&width=32"} alt={user?.nome || "User"} />
-                  <AvatarFallback>{user?.nome?.[0] || "U"}</AvatarFallback>
+                  <AvatarImage 
+                    src={message.user_id === companyUserId ? (user?.profile_picture || "/placeholder.svg?height=32&width=32") : (selectedAgendamento?.photo || "/placeholder.svg?height=32&width=32")} 
+                    alt={message.user_id === companyUserId ? (user?.nome || "Company") : (selectedAgendamento?.cliente || "Client")} 
+                  />
+                  <AvatarFallback>{message.user_id === companyUserId ? (user?.nome?.[0] || "C") : (selectedAgendamento?.cliente?.[0] || "U")}</AvatarFallback>
                 </Avatar>
-                <div className={`mx-2 ${message.user_id === user?.id ? "bg-blue-500 text-white" : "bg-gray-200"} rounded-lg p-3 max-w-xs`}>
+                <div className={`mx-2 ${message.user_id === companyUserId ? "bg-blue-500 text-white" : "bg-gray-200"} rounded-lg p-3 max-w-xs`}>
                   <p>{message.mensagem}</p>
                   <span className="text-xs opacity-70 mt-1 block">
                     {new Date(message.data_hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

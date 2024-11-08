@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Settings, User, LogOut, ShoppingCart } from "lucide-react"
+import { Settings, User, LogOut, Calendar } from "lucide-react"
 import Compras from '@/components/compras';
 import Agenda from "../components/listchat"; 
 import {  MoreVertical, Mic, Send, MessageCircle } from 'lucide-react'
@@ -145,9 +145,20 @@ export default function Header() {
                 </>
               )}
               {isLoggedIn && (
-                <DropdownMenuItem asChild>
-                  <Compras />
-                </DropdownMenuItem>
+               <>
+               <DropdownMenuItem>
+               <Link href="/agenda" className="flex items-center">
+                   <Calendar className="mr-2 h-4 w-4" />
+                   <span>Agenda</span>
+                 </Link>
+               </DropdownMenuItem>
+               <DropdownMenuItem asChild>
+                 <Link href="/chat2/chatcliente" className="flex items-center">
+                   <MessageCircle className="mr-2 h-4 w-4" />
+                   <span>Chat</span>
+                 </Link>
+               </DropdownMenuItem>
+             </>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={isLoggedInEmpresa ? handleLogoutEmpresa : handleLogout}>

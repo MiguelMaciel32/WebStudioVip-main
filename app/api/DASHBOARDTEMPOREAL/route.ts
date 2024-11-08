@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '../../../lib/db'; // Verifique o caminho correto da conexão com seu banco de dados
+import { query } from '../../../lib/db';
 import jwt from 'jsonwebtoken';
 
 interface Empresa {
@@ -11,12 +11,12 @@ interface Empresa {
 }
 
 interface DecodedToken {
-  id: number; // O ID da empresa que vem do token JWT
+  id: number; 
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'luismiguel-empresa';
 
-// Função auxiliar para obter agendamentos
+
 async function getAgendamentos(empresaId: number) {
   return query<Empresa[]>(`
       SELECT a.id, a.data_hora, a.servico, u.name as cliente, u.contact as email
@@ -27,7 +27,7 @@ async function getAgendamentos(empresaId: number) {
   `, [empresaId]);
 }
 
-// Handler para o método GET
+
 export async function GET(request: NextRequest) {
   const authorizationHeader = request.headers.get('Authorization');
 
@@ -44,10 +44,9 @@ export async function GET(request: NextRequest) {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
 
-    // Obtém os agendamentos da empresa
+ 
     const agendamentos = await getAgendamentos(decoded.id);
 
-    // Retorna os dados em formato JSON
     return NextResponse.json({ data: agendamentos });
 
   } catch (err) {
@@ -56,7 +55,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Handler para o método POST
 export async function POST(request: NextRequest) {
   try {
     const authorizationHeader = request.headers.get('Authorization');
@@ -71,24 +69,24 @@ export async function POST(request: NextRequest) {
 
     const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
 
-    // Aqui você pode tratar dados recebidos no body da requisição (se necessário)
+
     const body = await request.json().catch(err => {
       console.error('Erro ao fazer parse do JSON:', err);
-      return null; // Retorna null se não puder analisar
+      return null;
     });
 
-    // Verifica se o corpo está vazio
+
     if (!body) {
       console.warn('Corpo da requisição vazio ou inválido.');
-      return NextResponse.json({ data: [] }); // Retorna uma resposta padrão se não houver dados
+      return NextResponse.json({ data: [] });
     }
 
     console.log('Dados recebidos no POST:', body);
 
-    // Obtém os agendamentos da empresa
+
     const agendamentos = await getAgendamentos(decoded.id);
 
-    // Retorna os dados em formato JSON
+
     return NextResponse.json({ data: agendamentos });
 
   } catch (err) {

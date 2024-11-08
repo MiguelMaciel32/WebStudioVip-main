@@ -1,50 +1,40 @@
-// app/api/enviarMensagem/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
+import { execute } from '../../../lib/db'; // Helper para interação com o banco de dados
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET_EMPRESA = 'luismiguel-empresa';
-
-interface JwtPayload {
-    id: string; // Altere para number se o ID for um número
-    username: string;
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'luismiguel';
 
 export async function POST(request: NextRequest) {
-    const { agendamento_id, mensagem, enviado_por } = await request.json();
+  try {
+    // Extrair o corpo da requisição
+    const { agendamento_id, mensagem } = await request.json();
 
-    if (!agendamento_id || !mensagem || !enviado_por) {
-        return NextResponse.json({ error: 'Agendamento ID, mensagem e ID do usuário são obrigatórios' }, { status: 400 });
+    // Verificar se o token de autorização está presente nos headers
+    const authorizationHeader = request.headers.get('Authorization');
+    if (!authorizationHeader) {
+      return NextResponse.json({ error: 'Token de autorização não fornecido.' }, { status: 401 });
     }
 
-    const token_empresa = request.headers.get('authorization')?.split(' ')[1];
-    let decodedToken: JwtPayload;
-
-    if (token_empresa) {
-        try {
-            decodedToken = jwt.verify(token_empresa, JWT_SECRET_EMPRESA) as JwtPayload; // Tipo correto aqui
-        } catch (error) {
-            return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-        }
-    } else {
-        return NextResponse.json({ error: 'Token não encontrado' }, { status: 401 });
+    // Extrair o token do cabeçalho
+    const token = authorizationHeader.split(' ')[1];
+    if (!token) {
+      return NextResponse.json({ error: 'Token não encontrado no cabeçalho.' }, { status: 401 });
     }
 
-    try {
-        const newMessage = await saveMessageToDatabase(agendamento_id, mensagem, enviado_por, decodedToken.id);
-        return NextResponse.json(newMessage);
-    } catch (error) {
-        console.error('Erro ao salvar mensagem:', error);
-        return NextResponse.json({ error: 'Erro ao salvar mensagem' }, { status: 500 });
-    }
-}
+    // Verificar o token e decodificá-lo para obter o ID do usuário
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: number };
 
-async function saveMessageToDatabase(agendamento_id: string, mensagem: string, enviado_por: string, empresaId: string) {
-    // Lógica real do seu banco de dados aqui
-    return {
-        id: Math.random(), // Apenas para simular um ID único
-        mensagem: mensagem,
-        user_id: enviado_por,
-        agendamento_id: agendamento_id,
-    };
+    // Inserir a mensagem no banco de dados
+    const result = await execute(
+      `INSERT INTO mensagens (agendamento_id, empresa_id, mensagem, data_hora)
+       VALUES (?, ?, ?, NOW())`,
+      [agendamento_id, decoded.id, mensagem]
+    );
+
+    // Retornar resposta de sucesso
+    return NextResponse.json({ success: true, message: 'Mensagem enviada com sucesso.', result }, { status: 200 });
+  } catch (error) {
+    console.error('Erro ao enviar mensagem:', error);
+    return NextResponse.json({ error: 'Erro ao enviar mensagem.' }, { status: 500 });
+  }
 }

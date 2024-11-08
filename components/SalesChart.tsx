@@ -57,14 +57,14 @@ export default function SalesChart({ className }: SalesChartProps) {
     fetchSalesData();
 
 
-    const interval = setInterval(fetchSalesData, 1); 
+    const interval = setInterval(fetchSalesData, 100000); 
     return () => clearInterval(interval);
+    
   }, []);
 
   const countAgendamentosPorMes = (data: { agendamento_id: number; data_hora: string }[]) => {
     const monthlyCount: { [key: string]: number } = {};
     
-    // Definição dos nomes dos meses
     const monthNames: string[] = [
       "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
       "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
@@ -72,8 +72,8 @@ export default function SalesChart({ className }: SalesChartProps) {
 
     data.forEach(item => {
       const date = new Date(item.data_hora);
-      const month = date.getUTCMonth(); // Mês em formato 0-11
-      const year = date.getUTCFullYear(); // Ano
+      const month = date.getUTCMonth(); 
+      const year = date.getUTCFullYear(); 
 
       const monthYearKey = `${monthNames[month]} ${year}`; 
       if (!monthlyCount[monthYearKey]) {

@@ -21,7 +21,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { empresaId, data_hora, servico, nome, telefone } = body; // Corrigido para usar o nome correto
+    const { empresaId, data_hora, servico, nome, telefone } = body;
+
+    if (!empresaId || !data_hora || !servico || !nome || !telefone) {
+      return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 });
+    }
 
     const agendamentoData = new Date(data_hora);
     const dataAtual = new Date();
@@ -30,14 +34,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não é possível agendar para uma data no passado.' }, { status: 400 });
     }
 
-    // Verificar se todos os dados necessários estão presentes
-    if (!empresaId || !data_hora || !servico || !nome || !telefone) {
-      return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 });
-    }
-
     const existingAgendamento = await query(
       'SELECT * FROM agendamentos WHERE empresa_id = ? AND data_hora = ?',
-      [empresaId, data_hora] // Verifique se a empresaId é correta
+      [empresaId, data_hora]
     );
 
     if (existingAgendamento.length > 0) {

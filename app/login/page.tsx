@@ -13,14 +13,15 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const router = useRouter();
 
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
+  
     if (!email || !password) {
       toast({ title: 'Por favor, preencha todos os campos.' });
       return;
     }
-
+  
     try {
       const response = await fetch('/api/login', {
         method: 'POST',
@@ -29,20 +30,25 @@ export default function Login() {
         },
         body: JSON.stringify({ username: email, password }),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
+
         sessionStorage.setItem('token', data.token); 
         sessionStorage.setItem('email', email);
         const profilePicture = data.profilePicture || 'https://t3.ftcdn.net/jpg/03/81/30/16/360_F_381301638_mo8XtnvD4VtKWjNITYhwL3ITRxF4ldaO.jpg';
         sessionStorage.setItem('profilePicture', profilePicture);
-       
-       
+  
+
         toast({ title: 'Bem-vindo de volta!' });
-        router.push('/profile');
-        window.location.reload(); 
-        
+  
+
+        setTimeout(() => {
+          router.push('/profile');
+          window.location.reload()
+        }, 1000);
+  
       } else {
         toast({ title: data.error || 'Erro ao realizar login.' });
       }

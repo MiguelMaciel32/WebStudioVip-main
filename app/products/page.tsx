@@ -6,40 +6,60 @@ import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Star } from "lucide-react";
-import { StarsIcon } from "lucide-react";
+
+// Definição do tipo de produto
+interface Product {
+  id: number;
+  company_name: string;
+  address: string;
+  logo: string | null;
+  ambient_photo: string | null;
+}
 
 // Função para buscar produtos da API
-async function fetchProducts() {
+async function fetchProducts(): Promise<Product[]> {
   try {
-    const response = await fetch('https://apidelistagem-htb5ph6ay-luismiguels-projects.vercel.app');
+    const response = await fetch('https://apidelistagem.vercel.app/?vercelToolbarCode=DQyB53C7ekGDRw6', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store', // Evita cache no lado do cliente
+    });
+
     if (!response.ok) {
       throw new Error('Erro ao carregar produtos');
     }
-    return await response.json();
+
+    const data = await response.json();
+    console.log('Dados recebidos da API:', data); // Log para debug
+    return data;
   } catch (error) {
     console.error('Erro ao buscar produtos:', error);
-    return [];  // Retorna uma lista vazia em caso de erro
+    return [];
   }
 }
 
 export default function PaginaDeProdutos() {
-  const [products, setProducts] = useState<any[]>([]); // Estado para armazenar os produtos
-  const [loading, setLoading] = useState(true); // Estado de carregamento
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // useEffect para carregar os produtos ao montar o componente
   useEffect(() => {
     async function loadProducts() {
       try {
         const data = await fetchProducts();
-        setProducts(data); // Armazena os produtos no estado
+        console.log('Dados carregados no componente:', data); // Log para debug
+        setProducts(data);
       } catch (error) {
         console.error('Erro ao carregar produtos:', error);
       } finally {
-        setLoading(false); // Atualiza o estado de carregamento
+        setLoading(false);
       }
     }
     loadProducts();
   }, []);
+
+  console.log('Estado atual dos produtos:', products); // Log para debug
 
   return (
     <section className="px-6 py-4">
@@ -51,7 +71,7 @@ export default function PaginaDeProdutos() {
       </p>
 
       {loading ? (
-        <p className="text-center mt-8">Carregando...</p> // Exibe uma mensagem de carregamento enquanto os produtos não são carregados
+        <p className="text-center mt-8">Carregando...</p>
       ) : (
         <section className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {products.length > 0 ? (
@@ -65,13 +85,11 @@ export default function PaginaDeProdutos() {
                       width={300}
                       height={150}
                       className="w-full h-36 object-cover"
-                      priority={product === products[0]} // Define prioridade para o primeiro item
+                      priority={product === products[0]} 
                     />
                   </CardHeader>
                   <CardContent className="p-4">
-                    <CardTitle className="text-lg font-bold mb-1 truncate">
-                      {product.company_name || 'Nome da Empresa'}
-                    </CardTitle>
+                    <CardTitle className="text-lg font-bold mb-1 truncate">{product.company_name || 'Nome da Empresa'}</CardTitle>
                     <div className="flex items-center mb-2 text-muted-foreground">
                       <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
                       <p className="text-xs truncate">{product.address || 'Endereço não disponível'}</p>
@@ -82,10 +100,8 @@ export default function PaginaDeProdutos() {
                         <AvatarFallback>P</AvatarFallback>
                       </Avatar>
                       <div className="flex items-center">
-                        <StarsIcon size={14} className="text-yellow-400" />
-                        <span className="text-sm font-semibold text-primary ml-1">
-                          {product.rating?.toFixed(1) || '5.0'}
-                        </span>
+                        <Star size={14} className="text-yellow-400" />
+                        <span className="text-sm font-semibold text-primary ml-1">5.0</span>
                       </div>
                     </div>
                   </CardContent>
@@ -93,7 +109,7 @@ export default function PaginaDeProdutos() {
               </Link>
             ))
           ) : (
-            <p className="text-center">Nenhum produto encontrado.</p> // Mensagem caso não existam produtos
+            <p className="text-center col-span-full">Nenhum produto encontrado.</p>
           )}
         </section>
       )}

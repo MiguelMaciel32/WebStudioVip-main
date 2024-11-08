@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Star } from "lucide-react";
 
-// Definição do tipo de produto
+
 interface Product {
   id: number;
   company_name: string;
@@ -16,7 +16,7 @@ interface Product {
   ambient_photo: string | null;
 }
 
-// Função para buscar produtos da API
+
 async function fetchProducts(): Promise<Product[]> {
   try {
     const response = await fetch('https://apidelistagem.vercel.app/?vercelToolbarCode=DQyB53C7ekGDRw6', {

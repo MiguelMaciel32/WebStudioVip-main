@@ -6,8 +6,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'luismiguel-empresa';
 
 export async function POST(request: NextRequest) {
   try {
-
     const { agendamento_id, mensagem } = await request.json();
+
+    if (!agendamento_id || !mensagem) {
+      return NextResponse.json({ error: 'Agendamento ID e mensagem são obrigatórios.' }, { status: 400 });
+    }
 
     // Get the Authorization header and decode the token
     const authorizationHeader = request.headers.get('Authorization');
@@ -27,7 +30,7 @@ export async function POST(request: NextRequest) {
     // Insert the message into the database with the empresa_id
     const result = await execute(
       `INSERT INTO mensagens (agendamento_id, empresa_id, mensagem, data_hora)
-       VALUES (?, ?, ?, NOW())`,
+      VALUES (?, ?, ?, NOW())`,
       [agendamento_id, decoded.id, mensagem]
     );
 

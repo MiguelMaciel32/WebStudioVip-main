@@ -1,4 +1,3 @@
-// api/chat.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 
@@ -11,24 +10,28 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Obtenha informações do usuário e mensagens
-    const user = await query(`
-      SELECT id, name, profile_picture FROM users WHERE id = (
-        SELECT user_id FROM agendamentos WHERE id = ?
-      )`, [agendamento_id]);
+    // Obtenha informações do usuário associado ao agendamento
+    const userResult = await query(`
+      SELECT u.id, u.name, u.profile_picture 
+      FROM users u
+      JOIN agendamentos a ON u.id = a.user_id
+      WHERE a.id = ?
+    `, [agendamento_id]);
 
-    const mensagens = await query(`
-         SELECT a.id, a.data_hora, a.servico, u.name as cliente, u.contact as email
-      FROM agendamentos a
-      JOIN users u ON a.user_id = u.id
-      WHERE a.empresa_id = ?
-      ORDER BY a.data_hora DESC`, [agendamento_id]);
-
-    if (!user.length) {
+    if (!userResult.length) {
       return NextResponse.json({ error: 'Usuário não encontrado.' }, { status: 404 });
     }
+    const user = userResult[0];
 
-    return NextResponse.json({ user: user[0], mensagens }, { status: 200 });
+    // Obtenha mensagens específicas para o agendamento
+    const mensagens = await query(`
+      SELECT m.id, m.mensagem, m.data_hora, m.user_id 
+      FROM mensagens m
+      WHERE m.agendamento_id = ?
+      ORDER BY m.data_hora ASC
+    `, [agendamento_id]);
+
+    return NextResponse.json({ user, mensagens }, { status: 200 });
   } catch (error) {
     console.error('Erro ao buscar dados do chat:', error);
     return NextResponse.json({ error: 'Erro ao buscar dados do chat.' }, { status: 500 });

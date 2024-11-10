@@ -110,7 +110,7 @@ export default function Home() {
               alt="Hero"
               className="mx-auto aspect-square overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
               height="550"
-              src="/ata.png"
+              src="https://firebasestorage.googleapis.com/v0/b/studiovip-6913f.appspot.com/o/ata.jpg?alt=media&token=3d16f8a6-ed28-422a-80ed-a1270c192b80"
               width="550"
               priority
             />

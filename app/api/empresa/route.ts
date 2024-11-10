@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     const empresa = await query(
-      'SELECT id, nome_empresa, email, cnpj, telefone, sobre, address, logo, ambient_photo FROM empresas WHERE id = ?',
+      'SELECT id, nome_empresa, email, cep, telefone, sobre, address, logo, ambient_photo FROM empresas WHERE id = ?',
       [id]
     );
 

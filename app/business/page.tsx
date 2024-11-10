@@ -4,13 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { ArrowBigLeft } from "lucide-react";
-import { FormEvent, useState, ChangeEvent } from "react";
+import { FormEvent, useState, ChangeEvent, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { useRouter } from 'next/navigation';
 
 export default function BusinessCadastro() {
   const [nomeEmpresa, setNomeEmpresa] = useState<string>("");
-  const [cnpj, setCnpj] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [telefone, setTelefone] = useState<string>("");
   const [senha, setSenha] = useState<string>("");
@@ -20,55 +19,11 @@ export default function BusinessCadastro() {
   const [cidade, setCidade] = useState<string>("");
   const router = useRouter();
 
-  const validarCNPJ = (cnpj: string): boolean => {
-    cnpj = cnpj.replace(/[^\d]+/g, "");
-
-    if (cnpj.length !== 14) return false;
-
-    let soma = 0;
-    let pos = 5;
-
-    for (let i = 0; i < 12; i++) {
-      soma += parseInt(cnpj.charAt(i)) * pos--;
-      if (pos < 2) pos = 9;
-    }
-
-    let resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
-    if (resultado !== parseInt(cnpj.charAt(12))) return false;
-
-    soma = 0;
-    pos = 6;
-
-    for (let i = 0; i < 13; i++) {
-      soma += parseInt(cnpj.charAt(i)) * pos--;
-      if (pos < 2) pos = 9;
-    }
-
-    resultado = soma % 11 < 2 ? 0 : 11 - soma % 11;
-    if (resultado !== parseInt(cnpj.charAt(13))) return false;
-
-    return true;
-  };
-
-  const formatarCNPJ = (valor: string) => {
-    valor = valor.replace(/\D/g, "");
-    valor = valor.replace(/^(\d{2})(\d)/, "$1.$2");
-    valor = valor.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
-    valor = valor.replace(/\.(\d{3})(\d)/, ".$1/$2");
-    valor = valor.replace(/(\d{4})(\d)/, "$1-$2");
-    return valor;
-  };
-
-  const handleCnpjChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const formattedCnpj = formatarCNPJ(e.target.value);
-    setCnpj(formattedCnpj);
-  };
-
-  const formatarTelefone = (valor: string) => {
-    valor = valor.replace(/\D/g, "");
-    valor = valor.replace(/(\d{2})(\d)/, "($1) $2");
-    valor = valor.replace(/(\d{5})(\d)/, "$1-$2");
-    return valor;
+  // Função para formatar o telefone
+  const formatarTelefone = (valor: string): string => {
+    const cleaned = valor.replace(/\D/g, '');
+    const formatted = cleaned.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+    return formatted;
   };
 
   const handleTelefoneChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -76,15 +31,40 @@ export default function BusinessCadastro() {
     setTelefone(formattedTelefone);
   };
 
+  // Função para buscar o endereço pelo CEP
+  const buscarEndereco = async (cep: string) => {
+    if (cep.length === 8) {
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await response.json();
+
+        if (!data.erro) {
+          setAddress(data.logradouro);
+          setCidade(data.localidade);
+          setEstado(data.uf);
+        } else {
+          toast({
+            description: "CEP inválido. Não foi possível encontrar um endereço para o CEP informado.",
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar CEP:', error);
+        toast({
+          description: "Erro ao buscar o CEP. Tente novamente.",
+        });
+      }
+    }
+  };
+
+  // useEffect para buscar o endereço quando o CEP é alterado
+  useEffect(() => {
+    if (cep.length === 8) {
+      buscarEndereco(cep);
+    }
+  }, [cep]);
+
   const cadastrarEmpresa = async (e: FormEvent) => {
     e.preventDefault();
-
-    if (!validarCNPJ(cnpj)) {
-      toast({
-        description: "CNPJ inválido!",
-      });
-      return;
-    }
 
     try {
       const response = await fetch('/api/cadastrar-empresa', {
@@ -92,7 +72,7 @@ export default function BusinessCadastro() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ nomeEmpresa, cnpj, email, telefone, senha, address, cep, estado, cidade }),
+        body: JSON.stringify({ nomeEmpresa, email, telefone, senha, address, cep, estado, cidade }),
       });
 
       const data = await response.json();
@@ -107,7 +87,6 @@ export default function BusinessCadastro() {
           description: `Erro: ${data.error || 'Erro ao criar conta empresarial!'}`,
         });
       }
-
     } catch (error) {
       console.error('Erro ao criar conta empresarial:', error);
       toast({
@@ -138,12 +117,6 @@ export default function BusinessCadastro() {
             placeholder="Nome da Empresa" 
             value={nomeEmpresa}
             onChange={(e) => setNomeEmpresa(e.target.value)}
-          />
-          <Input
-            type="text"
-            placeholder="CNPJ"
-            value={cnpj}
-            onChange={handleCnpjChange}
           />
           <Input 
             placeholder="Email" 

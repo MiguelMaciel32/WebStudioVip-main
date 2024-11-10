@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useState, ChangeEvent } from "react";
+import { FormEvent, useState, ChangeEvent, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { useRouter } from 'next/navigation';
 
@@ -44,6 +44,8 @@ export default function Cadastro() {
   const [telefone, setTelefone] = useState<string>("");
   const [senha, setSenha] = useState<string>("");
   const [nome, setNome] = useState<string>("");
+  const [cep, setCep] = useState<string>("");
+  const [endereco, setEndereco] = useState<string>("");
   const [cidade, setCidade] = useState<string>("");
   const [estado, setEstado] = useState<string>("");
   const router = useRouter();
@@ -58,6 +60,36 @@ export default function Cadastro() {
     setTelefone(formattedTelefone);
   };
 
+  const buscarEndereco = async (cep: string) => {
+    if (cep.length === 8) {
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const data = await response.json();
+
+        if (!data.erro) {
+          setEndereco(data.logradouro);
+          setCidade(data.localidade);
+          setEstado(data.uf);
+        } else {
+          toast({
+            description: "CEP inválido. Não foi possível encontrar um endereço para o CEP informado.",
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar CEP:', error);
+        toast({
+          description: "Erro ao buscar o CEP. Tente novamente.",
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (cep.length === 8) {
+      buscarEndereco(cep);
+    }
+  }, [cep]);
+
   const cadastrarUsuario = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -67,7 +99,7 @@ export default function Cadastro() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ nome, email, telefone, senha, cidade, estado }),
+        body: JSON.stringify({ nome, email, telefone, senha, cep, endereco, cidade, estado }),
       });
 
       const data = await response.json();
@@ -108,26 +140,6 @@ export default function Cadastro() {
             onChange={(e) => setNome(e.target.value)}
             required
           />
-          <Input
-            type="text"
-            placeholder="Cidade"
-            value={cidade}
-            onChange={(e) => setCidade(e.target.value)}
-            required
-          />
-          <select
-            value={estado}
-            onChange={(e) => setEstado(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md"
-            required
-          >
-            <option value="" disabled>Selecione o estado</option>
-            {estados.map((estado) => (
-              <option key={estado.sigla} value={estado.sigla}>
-                {estado.nome}
-              </option>
-            ))}
-          </select>
           <Input 
             placeholder="Email" 
             type="email"
@@ -149,13 +161,44 @@ export default function Cadastro() {
             onChange={(e) => setSenha(e.target.value)}
             required
           />
+          <Input 
+            placeholder="CEP" 
+            value={cep}
+            onChange={(e) => setCep(e.target.value)}
+            required
+          />
+          <Input 
+            placeholder="Endereço" 
+            value={endereco}
+            onChange={(e) => setEndereco(e.target.value)}
+            required
+          />
+          <Input
+            placeholder="Cidade"
+            value={cidade}
+            onChange={(e) => setCidade(e.target.value)}
+            required
+          />
+          <select
+            value={estado}
+            onChange={(e) => setEstado(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            required
+          >
+            <option value="" disabled>Selecione o estado</option>
+            {estados.map((estado) => (
+              <option key={estado.sigla} value={estado.sigla}>
+                {estado.nome}
+              </option>
+            ))}
+          </select>
           <Button className="gap-2 justify-center w-full" type="submit">
             <Sparkles size={16} />
             Criar minha conta!
           </Button>
         </form>
         <section className="flex flex-col gap-2 justify-center">
-          <Link href={"/profile"} className="flex">
+          <Link href={"/login"} className="flex">
             <Button variant={"link"} className="flex justify-center w-full">
               Ou entre em uma conta existente!
             </Button>

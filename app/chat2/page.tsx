@@ -5,20 +5,19 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send } from 'lucide-react';
+import { Send, Paperclip } from 'lucide-react';
 
 type Message = {
   id: number;
-  agendamento_id: number;
-  user_id: number;
   mensagem: string;
   data_hora: string;
+  user_id: number | null;
 };
 
 type User = {
   id: number;
-  profile_picture: string;
-  nome: string;
+  name: string;
+  profile_picture: string | null;
 };
 
 interface Agendamento {
@@ -28,6 +27,11 @@ interface Agendamento {
   data_hora: string;
   servico: string;
   photo?: string;
+}
+
+interface ApiResponse {
+  user: User;
+  mensagens: Message[];
 }
 
 export default function TechPulseChat() {
@@ -73,7 +77,6 @@ export default function TechPulseChat() {
 
     fetchAgendamentos();
 
-    // Fetch company user ID
     const fetchCompanyUserId = async () => {
       try {
         const token_empresa = sessionStorage.getItem("token_empresa");
@@ -113,19 +116,19 @@ export default function TechPulseChat() {
       setSelectedAgendamento(agendamento);
       setMessages([]);
 
-      const response = await fetch(`/api/chat?id=${agendamento.id}`, {
+      const response = await fetch(`api/chat?id=${agendamento.id}`, {
         headers: {
           'Authorization': `Bearer ${token_empresa}`,
         },
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        console.error(data.error);
+        const errorData = await response.json();
+        console.error("Erro ao buscar dados do chat:", errorData.error);
         return;
       }
 
-      const data = await response.json();
+      const data: ApiResponse = await response.json();
       setUser(data.user);
       setMessages(data.mensagens);
     } catch (error) {
@@ -133,28 +136,26 @@ export default function TechPulseChat() {
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSendMessage = async () => {
     if (newMessage.trim() && companyUserId && selectedAgendamento) {
       const message: Message = {
         id: messages.length + 1,
-        agendamento_id: selectedAgendamento.id,
-        user_id: companyUserId,
         mensagem: newMessage,
         data_hora: new Date().toISOString(),
+        user_id: companyUserId,
       };
-
+  
+      // Adicionar a nova mensagem localmente
       setMessages((prevMessages) => [...prevMessages, message]);
-      setNewMessage("");
-
+      setNewMessage(""); // Limpar a caixa de mensagem
+  
       try {
         const token_empresa = sessionStorage.getItem('token_empresa');
         if (!token_empresa) {
           router.push('/login');
           return;
         }
-
+  
         const response = await fetch(`/api/enviarmsgempresa`, {
           method: "POST",
           headers: {
@@ -162,20 +163,28 @@ export default function TechPulseChat() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            agendamento_id: selectedAgendamento.id,
-            mensagem: newMessage,
+            agendamento_id: selectedAgendamento.id,  // Passar o ID correto
+            mensagem: newMessage,  // Passar a mensagem corretamente
           }),
         });
-
+  
         const data = await response.json();
+  
         if (!response.ok) {
           console.error("Erro ao enviar mensagem:", data.error);
+        } else {
+          console.log("Mensagem enviada com sucesso:", data);
         }
       } catch (error) {
         console.error("Erro ao enviar mensagem:", error);
       }
+    } else {
+      console.log('Mensagem vazia ou agendamento não selecionado');
     }
   };
+  
+  
+  
 
   const filteredAgendamentos = agendamentos.filter((agendamento) =>
     agendamento.cliente.toLowerCase().includes(searchTerm.toLowerCase())
@@ -233,41 +242,50 @@ export default function TechPulseChat() {
             <p className="text-yellow-700">Esta conversa está sendo monitorada para fins de qualidade e treinamento.</p>
           </div>
 
-          {messages.map((message) => (
-            <div key={message.id} className={`flex ${message.user_id === companyUserId ? "justify-end" : "justify-start"}`}>
-              <div className={`flex ${message.user_id === companyUserId ? "flex-row-reverse" : "flex-row"} items-end`}>
-                <Avatar className="h-8 w-8">
-                  <AvatarImage 
-                    src={message.user_id === companyUserId ? (user?.profile_picture || "/placeholder.svg?height=32&width=32") : (selectedAgendamento?.photo || "/placeholder.svg?height=32&width=32")} 
-                    alt={message.user_id === companyUserId ? (user?.nome || "Company") : (selectedAgendamento?.cliente || "Client")} 
-                  />
-                  <AvatarFallback>{message.user_id === companyUserId ? (user?.nome?.[0] || "C") : (selectedAgendamento?.cliente?.[0] || "U")}</AvatarFallback>
-                </Avatar>
-                <div className={`mx-2 ${message.user_id === companyUserId ? "bg-blue-500 text-white" : "bg-gray-200"} rounded-lg p-3 max-w-xs`}>
-                  <p>{message.mensagem}</p>
-                  <span className="text-xs opacity-70 mt-1 block">
-                    {new Date(message.data_hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+          {messages.length === 0 ? (
+            <p className="text-sm text-muted-foreground p-4">Nenhuma mensagem encontrada.</p>
+          ) : (
+            messages.map((message) => (
+              <div key={message.id} className={`flex ${message.user_id === companyUserId ? "justify-end" : "justify-start"}`}>
+                <div className={`flex ${message.user_id === companyUserId ? "flex-row-reverse" : "flex-row"} items-end`}>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage 
+                      src={message.user_id === companyUserId ? (user?.profile_picture || "/placeholder.svg?height=32&width=32") : (selectedAgendamento?.photo || "/placeholder.svg?height=32&width=32")} 
+                      alt={message.user_id === companyUserId ? (user?.name || "Company") : (selectedAgendamento?.cliente || "Client")} 
+                    />
+                    <AvatarFallback>{message.user_id === companyUserId ? (user?.name?.[0] || "C") : (selectedAgendamento?.cliente?.[0] || "U")}</AvatarFallback>
+                  </Avatar>
+                  <div className={`mx-2 ${message.user_id === companyUserId ? "bg-blue-500 text-white" : "bg-gray-200"} rounded-lg p-3 max-w-xs`}>
+                    <p>{message.mensagem}</p>
+                    <span className="text-xs opacity-70 mt-1 block">
+                      {new Date(message.data_hora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <footer className="bg-white p-4 border-t">
-          <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-            <Input
-              type="text"
-              placeholder="Digite uma mensagem..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              className="flex-1"
-            />
-            <Button type="submit" size="icon" disabled={!selectedAgendamento}>
-              <Send className="h-5 w-5" />
-            </Button>
-          </form>
-        </footer>
+  <div className="flex items-center space-x-2">
+    <Button
+      type="button"
+      onClick={handleSendMessage}  
+      className="flex-shrink-0"
+      disabled={!selectedAgendamento || !newMessage.trim()}
+    >
+      <Send className="h-5 w-5" />
+    </Button>
+    <Input
+      type="text"
+      placeholder="Digite uma mensagem..."
+      value={newMessage}
+      onChange={(e) => setNewMessage(e.target.value)}
+      className="flex-1"
+    />
+  </div>
+</footer>
       </div>
     </div>
   );

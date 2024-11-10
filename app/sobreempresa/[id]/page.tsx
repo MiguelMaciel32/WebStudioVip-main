@@ -17,7 +17,7 @@ interface Empresa {
   id: number;
   nome_empresa: string;
   email: string;
-  cnpj: string;
+  cep: string;
   telefone: string;
   sobre: string | null;
   address: string;
@@ -102,7 +102,7 @@ function SobreEmpresa() {
                 empresaId={empresa.id}
                 servico={servico.nome}
                 precoServico={servico.preco}
-                userId={userId} // Passa o userId aqui
+                userId={userId} 
               >
                 <Button variant={"secondary"}>Reservar</Button>
               </AgendamentoTrigger>
@@ -110,7 +110,6 @@ function SobreEmpresa() {
           ))}
         </section>
 
-        {/* Informações adicionais sobre a empresa */}
         <section className="space-y-4">
           <h2 className="font-bold tracking-tighter text-3xl md:text-4xl leading-tight text-start md:text-center">
             Veja mais informações sobre essa empresa
@@ -133,7 +132,7 @@ function SobreEmpresa() {
             <CardContent className="flex gap-4">
               <p>{empresa.telefone}</p>
               <p>{empresa.email}</p>
-              <p>{empresa.cnpj}</p>
+              <p>{empresa.cep}</p>
             </CardContent>
           </Card>
         </section>

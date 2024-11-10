@@ -25,7 +25,7 @@ export default function Business() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ cnpj, email, senha }),
+                body: JSON.stringify({ email, senha }),
             });
 
             const data = await response.json();
@@ -94,14 +94,6 @@ export default function Business() {
                     login em nossos serviços.
                 </p>
                 <form className="space-y-2" onSubmit={handleLogin}>
-                    <Input
-                        type="text"
-                        value={cnpj}
-                        onChange={(e) => setCnpj(e.target.value)}
-                        placeholder="CNPJ"
-                        className="w-full"
-                        required
-                    />
                     <Input
                         type="email"
                         value={email}

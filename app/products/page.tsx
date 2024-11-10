@@ -7,15 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Star } from "lucide-react";
 
-
 interface Product {
   id: number;
   company_name: string;
   address: string;
   logo: string | null;
   ambient_photo: string | null;
+  cep: string;
 }
-
 
 async function fetchProducts(): Promise<Product[]> {
   try {
@@ -24,7 +23,7 @@ async function fetchProducts(): Promise<Product[]> {
       headers: {
         'Content-Type': 'application/json',
       },
-      cache: 'no-store', // Evita cache no lado do cliente
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -32,7 +31,7 @@ async function fetchProducts(): Promise<Product[]> {
     }
 
     const data = await response.json();
-    console.log('Dados recebidos da API:', data); // Log para debug
+    console.log('Dados recebidos da API:', data);
     return data;
   } catch (error) {
     console.error('Erro ao buscar produtos:', error);
@@ -40,15 +39,30 @@ async function fetchProducts(): Promise<Product[]> {
   }
 }
 
+// Função para calcular a diferença entre dois CEPs
+function calculateCepDifference(cep1: string, cep2: string): number {
+  const cep1Number = parseInt(cep1.replace(/\D/g, '')); // Remove caracteres não numéricos
+  const cep2Number = parseInt(cep2.replace(/\D/g, '')); // Remove caracteres não numéricos
+  return Math.abs(cep1Number - cep2Number); // Retorna a diferença absoluta entre os dois
+}
+
 export default function PaginaDeProdutos() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userCep, setUserCep] = useState<string | null>(null);
 
+  // Recupera os dados do produto e do CEP do usuário
   useEffect(() => {
     async function loadProducts() {
       try {
+        const storedCep = localStorage.getItem('userCep');
+        if (storedCep) {
+          setUserCep(storedCep);
+        } else {
+          console.error('CEP do usuário não encontrado');
+        }
+
         const data = await fetchProducts();
-        console.log('Dados carregados no componente:', data); // Log para debug
         setProducts(data);
       } catch (error) {
         console.error('Erro ao carregar produtos:', error);
@@ -59,7 +73,19 @@ export default function PaginaDeProdutos() {
     loadProducts();
   }, []);
 
-  console.log('Estado atual dos produtos:', products); // Log para debug
+  // Ordenar os produtos com base na diferença do CEP
+  useEffect(() => {
+    if (userCep && products.length > 0) {
+      const sortedProducts = [...products]
+        .map((product) => ({
+          ...product,
+          distance: calculateCepDifference(userCep, product.cep),
+        }))
+        .sort((a, b) => a.distance - b.distance);
+
+      setProducts(sortedProducts);
+    }
+  }, [userCep, products]);
 
   return (
     <section className="px-6 py-4">
@@ -85,7 +111,7 @@ export default function PaginaDeProdutos() {
                       width={300}
                       height={150}
                       className="w-full h-36 object-cover"
-                      priority={product === products[0]} 
+                      priority={product === products[0]}
                     />
                   </CardHeader>
                   <CardContent className="p-4">

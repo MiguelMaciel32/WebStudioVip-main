@@ -5,20 +5,20 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET_EMPRESA = 'luismiguel-empresa';
 
 export async function POST(request: NextRequest) {
-    const { cnpj, email, senha } = await request.json();
+    const { email, senha } = await request.json();
 
-    if (!cnpj || !email || !senha) {
+    if (  !email || !senha) {
         return NextResponse.json({ error: 'Todos os campos são obrigatórios.' }, { status: 400 });
     }
 
     try {
         const results = await query(`
             SELECT * FROM empresas
-            WHERE cnpj = ? AND email = ?
-        `, [cnpj, email]);
+            WHERE  email = ?
+        `, [email]);
 
         if (results.length === 0) {
-            return NextResponse.json({ error: 'CNPJ ou email inválido.' }, { status: 401 });
+            return NextResponse.json({ error: 'E-mail inválido.' }, { status: 401 });
         }
 
         const empresa = results[0];

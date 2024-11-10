@@ -9,6 +9,7 @@ interface User {
   password: string;
   profile_picture: string;
   name: string;
+  cep: string;
 }
 
 const JWT_SECRET = 'luismiguel';
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
         message: 'Login bem-sucedido',
         profilePicture: user.profile_picture,
         name: user.name,
+        cep: user.cep,
         token
       });
     } else {

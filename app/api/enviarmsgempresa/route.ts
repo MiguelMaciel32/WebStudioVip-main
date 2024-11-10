@@ -7,6 +7,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'luismiguel-empresa';
 export async function POST(request: NextRequest) {
   try {
     const { agendamento_id, mensagem } = await request.json();
+    console.log('Dados recebidos:', { agendamento_id, mensagem });
+
 
     if (!agendamento_id || !mensagem) {
       return NextResponse.json({ error: 'Agendamento ID e mensagem são obrigatórios.' }, { status: 400 });

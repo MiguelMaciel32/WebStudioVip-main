@@ -18,8 +18,8 @@ import Compras from '@/components/compras';
 import Agenda from "../components/listchat"; 
 import {  MoreVertical, Mic, Send, MessageCircle } from 'lucide-react'
 
-const templateClient = '/foto.jpg';  
-const templateBusiness = '/foto.jpg';
+const templateClient = 'https://firebasestorage.googleapis.com/v0/b/studiovip-6913f.appspot.com/o/image.png?alt=media&token=fd5166ad-2a88-49b6-afaa-4c2f9789546a';  
+const templateBusiness = 'https://firebasestorage.googleapis.com/v0/b/studiovip-6913f.appspot.com/o/image.png?alt=media&token=fd5166ad-2a88-49b6-afaa-4c2f9789546a';
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -112,7 +112,7 @@ export default function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-12 w-12 rounded-full p-0">
                 <Image
-                  src={imageUrl}
+                  src={imageUrl || '../../foto.jpg'}
                   alt="Foto de perfil"
                   width={48}
                   height={48}

@@ -5,19 +5,20 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Paperclip } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 type Message = {
   id: number;
+  agendamento_id: number;
+  user_id: number;
   mensagem: string;
   data_hora: string;
-  user_id: number | null;
 };
 
 type User = {
   id: number;
+  profile_picture: string;
   name: string;
-  profile_picture: string | null;
 };
 
 interface Agendamento {
@@ -29,26 +30,21 @@ interface Agendamento {
   photo?: string;
 }
 
-interface ApiResponse {
-  user: User;
-  mensagens: Message[];
-}
-
-export default function TechPulseChat() {
+export default function TechPulseChat2() {
   const [user, setUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const [companyUserId, setCompanyUserId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAgendamento, setSelectedAgendamento] = useState<Agendamento | null>(null);
-  const [companyUserId, setCompanyUserId] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const fetchAgendamentos = async () => {
       try {
-        const token_empresa = sessionStorage.getItem("token_empresa");
-        if (!token_empresa) {
+        const token_cliente = sessionStorage.getItem("token_empresa");
+        if (!token_cliente) {
           router.push('/login');
           return;
         }
@@ -56,7 +52,7 @@ export default function TechPulseChat() {
         const response = await fetch("/api/conversas", {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${token_empresa}`,
+            Authorization: `Bearer ${token_cliente}`,
           },
           credentials: "include",
         });
@@ -76,59 +72,34 @@ export default function TechPulseChat() {
     };
 
     fetchAgendamentos();
-
-    const fetchCompanyUserId = async () => {
-      try {
-        const token_empresa = sessionStorage.getItem("token_empresa");
-        if (!token_empresa) {
-          router.push('/login');
-          return;
-        }
-
-        const response = await fetch("/api/company-user-id", {
-          headers: {
-            Authorization: `Bearer ${token_empresa}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch company user ID');
-        }
-
-        const data = await response.json();
-        setCompanyUserId(data.userId);
-      } catch (error) {
-        console.error('Error fetching company user ID:', error);
-      }
-    };
-
-    fetchCompanyUserId();
   }, [router]);
 
   const fetchChatData = async (agendamento: Agendamento) => {
     try {
-      const token_empresa = sessionStorage.getItem('token_empresa');
-      if (!token_empresa) {
+      const token_cliente = sessionStorage.getItem('token_empresa');
+      if (!token_cliente) {
         router.push('/login');
         return;
       }
 
-      setSelectedAgendamento(agendamento);
+      setSelectedAgendamento(agendamento); 
       setMessages([]);
 
-      const response = await fetch(`api/chat?id=${agendamento.id}`, {
+      console.log('ID do agendamento:', agendamento.id);
+
+      const response = await fetch(`https://chatempresa.vercel.app/?id=${agendamento.id}`, {
+         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token_empresa}`,
+          'Authorization': `Bearer ${token_cliente}`,
         },
       });
-
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Erro ao buscar dados do chat:", errorData.error);
+        const data = await response.json();
+        console.error(data.error);
         return;
       }
 
-      const data: ApiResponse = await response.json();
+      const data = await response.json();
       setUser(data.user);
       setMessages(data.mensagens);
     } catch (error) {
@@ -136,55 +107,49 @@ export default function TechPulseChat() {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (newMessage.trim() && companyUserId && selectedAgendamento) {
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (newMessage.trim() && user && selectedAgendamento) {
       const message: Message = {
         id: messages.length + 1,
+        agendamento_id: selectedAgendamento.id,
+        user_id: user.id,
         mensagem: newMessage,
         data_hora: new Date().toISOString(),
-        user_id: companyUserId,
       };
-  
-      // Adicionar a nova mensagem localmente
+
       setMessages((prevMessages) => [...prevMessages, message]);
-      setNewMessage(""); // Limpar a caixa de mensagem
-  
+      setNewMessage("");
+
       try {
-        const token_empresa = sessionStorage.getItem('token_empresa');
-        if (!token_empresa) {
+        const token_cliente = sessionStorage.getItem('token_empresa');
+        if (!token_cliente) {
           router.push('/login');
           return;
         }
-  
+
         const response = await fetch(`/api/enviarmsgempresa`, {
           method: "POST",
           headers: {
-            'Authorization': `Bearer ${token_empresa}`,
+            'Authorization': `Bearer ${token_cliente}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            agendamento_id: selectedAgendamento.id,  // Passar o ID correto
-            mensagem: newMessage,  // Passar a mensagem corretamente
+            agendamento_id: selectedAgendamento.id,
+            mensagem: newMessage,
           }),
         });
-  
+
         const data = await response.json();
-  
         if (!response.ok) {
           console.error("Erro ao enviar mensagem:", data.error);
-        } else {
-          console.log("Mensagem enviada com sucesso:", data);
         }
       } catch (error) {
         console.error("Erro ao enviar mensagem:", error);
       }
-    } else {
-      console.log('Mensagem vazia ou agendamento não selecionado');
     }
   };
-  
-  
-  
 
   const filteredAgendamentos = agendamentos.filter((agendamento) =>
     agendamento.cliente.toLowerCase().includes(searchTerm.toLowerCase())
@@ -268,13 +233,8 @@ export default function TechPulseChat() {
         </div>
 
         <footer className="bg-white p-4 border-t">
-  <div className="flex items-center space-x-2">
-    <Button
-      type="button"
-      onClick={handleSendMessage}  
-      className="flex-shrink-0"
-      disabled={!selectedAgendamento || !newMessage.trim()}
-    >
+  <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
+    <Button type="submit" size="icon" disabled={!selectedAgendamento}>
       <Send className="h-5 w-5" />
     </Button>
     <Input
@@ -284,8 +244,9 @@ export default function TechPulseChat() {
       onChange={(e) => setNewMessage(e.target.value)}
       className="flex-1"
     />
-  </div>
+  </form>
 </footer>
+
       </div>
     </div>
   );

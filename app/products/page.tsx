@@ -73,7 +73,6 @@ export default function PaginaDeProdutos() {
     loadProducts();
   }, []);
 
-  // Ordenar os produtos com base na diferença do CEP
   useEffect(() => {
     if (userCep && products.length > 0) {
       const sortedProducts = [...products]

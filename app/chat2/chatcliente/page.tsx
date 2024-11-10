@@ -84,12 +84,14 @@ export default function TechPulseChat2() {
       setSelectedAgendamento(agendamento); 
       setMessages([]);
 
-      const response = await fetch(`/api/chat2?id=${agendamento.id}`, {
+      console.log('ID do agendamento:', agendamento.id);
+
+      const response = await fetch(`https://chatempresa.vercel.app/?id=${agendamento.id}`, {
+         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token_cliente}`,
         },
       });
-
       if (!response.ok) {
         const data = await response.json();
         console.error(data.error);
@@ -223,21 +225,20 @@ export default function TechPulseChat2() {
             </div>
           ))}
         </div>
-
         <footer className="bg-white p-4 border-t">
-          <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-            <Input
-              type="text"
-              placeholder="Digite uma mensagem..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              className="flex-1"
-            />
-            <Button type="submit" size="icon" disabled={!selectedAgendamento}>
-              <Send className="h-5 w-5" />
-            </Button>
-          </form>
-        </footer>
+  <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
+    <Button type="submit" size="icon" disabled={!selectedAgendamento}>
+      <Send className="h-5 w-5" />
+    </Button>
+    <Input
+      type="text"
+      placeholder="Digite uma mensagem..."
+      value={newMessage}
+      onChange={(e) => setNewMessage(e.target.value)}
+      className="flex-1"
+    />
+  </form>
+</footer>
       </div>
     </div>
   );

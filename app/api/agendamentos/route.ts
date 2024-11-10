@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Decodifica e verifica o token JWT
+    // Decodifica e verifica o token JWTs
     const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
     
     // Consulta agendamentos filtrando pelo id da empresa

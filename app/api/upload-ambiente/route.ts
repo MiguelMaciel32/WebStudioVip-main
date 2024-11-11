@@ -15,12 +15,10 @@ interface DecodedToken {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'luismiguel-empresa';
 
-// Defina um limite para o tamanho do arquivo (por exemplo, 5 MB)
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 5 MB
 
 export async function POST(req: Request) {
   try {
-    // Validação do token JWT
     const authorizationHeader = req.headers.get('Authorization');
     if (!authorizationHeader) {
       return NextResponse.json({ error: 'Token de autorização não fornecido.' }, { status: 401 });
@@ -38,7 +36,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Token inválido ou usuário não encontrado.' }, { status: 401 });
     }
 
-    // Processando o arquivo de imagem
     const formData = await req.formData();
     const file = formData.get('file') as Blob | null;
 

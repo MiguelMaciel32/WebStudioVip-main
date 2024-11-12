@@ -3,11 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { bucket } from '../../../lib/firebaseAdmin';
 import { query, execute } from '../../../lib/db';
 import jwt from 'jsonwebtoken';
-import vision from '@google-cloud/vision'; 
-
-const client = new vision.ImageAnnotatorClient({
-  keyFilename: '/Users/user/Documents/Web/vision/scadaiot-c8a2b-c3b35ad8ad84.json',  
-});
 
 interface DecodedToken {
   id: number;
@@ -15,7 +10,7 @@ interface DecodedToken {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'luismiguel-empresa';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 export async function POST(req: Request) {
   try {
@@ -46,33 +41,11 @@ export async function POST(req: Request) {
     // Verificar o tamanho do arquivo
     const fileSize = file.size;
     if (fileSize > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'O arquivo é muito grande. O tamanho máximo permitido é 5 MB.' }, { status: 400 });
+      return NextResponse.json({ error: 'O arquivo é muito grande. O tamanho máximo permitido é 10 MB.' }, { status: 400 });
     }
 
     const fileName = `${uuidv4()}.jpg`;
     const fileBuffer = Buffer.from(await file.arrayBuffer());
-
-    // Verificando se a imagem contém conteúdo impróprio usando a Vision API
-    const [result] = await client.safeSearchDetection(fileBuffer);
-    const safeSearch = result.safeSearchAnnotation;
-
-    if (safeSearch) {
-      const { adult, violence, racy, spoof } = safeSearch;
-
-      // Rejeita imagens com conteúdo impróprio
-      if (adult === 'LIKELY' || adult === 'VERY_LIKELY' || 
-          violence === 'LIKELY' || violence === 'VERY_LIKELY' ||
-          racy === 'LIKELY' || racy === 'VERY_LIKELY' ||
-          spoof === 'LIKELY' || spoof === 'VERY_LIKELY') {
-        
-        return NextResponse.json({
-          error: 'A imagem contém conteúdo impróprio e não pode ser enviada.',
-          toast: 'Imagem imprópria! Evite conteúdo adulto, violento ou sugestivo.'
-        }, { status: 400 });
-      }
-    } else {
-      return NextResponse.json({ error: 'Erro na análise de segurança da imagem.' }, { status: 500 });
-    }
 
     // Upload da imagem no Firebase Storage
     const fileUpload = bucket.file(fileName);
@@ -97,13 +70,13 @@ export async function POST(req: Request) {
     // Salvando a URL da imagem no banco de dados
     const updateResult = await execute('UPDATE empresas SET ambient_photo = ? WHERE id = ?', [imageUrl, userId]);
     if (updateResult.affectedRows === 0) {
-      return NextResponse.json({ error: 'Nenhuma linha foi atualizada.', status: 404 });
+      return NextResponse.json({ error: 'Nenhuma linha foi atualizada.' }, { status: 404 });
     }
 
     return NextResponse.json({ profilePicture: imageUrl }, { status: 200 });
 
   } catch (error) {
     console.error('Erro ao fazer upload da imagem:', error);
-    return NextResponse.json({ error: 'Erro ao fazer upload da imagem.', status: 500 });
+    return NextResponse.json({ error: 'Erro ao fazer upload da imagem.' }, { status: 500 });
   }
 }

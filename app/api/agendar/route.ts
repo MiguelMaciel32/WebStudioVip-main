@@ -34,6 +34,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não é possível agendar para uma data no passado.' }, { status: 400 });
     }
 
+    // Verificar se o usuário já tem um agendamento em outro salão no mesmo horário
+    const agendamentoConflitante = await query(
+      'SELECT * FROM agendamentos WHERE user_id = ? AND data_hora = ?',
+      [userId, data_hora]
+    );
+
+    if (agendamentoConflitante.length > 0) {
+      return NextResponse.json({ error: 'Você já tem um agendamento em outro salão neste horário.' }, { status: 409 });
+    }
+
+    // Verificar se o horário no salão específico já está ocupado
     const existingAgendamento = await query(
       'SELECT * FROM agendamentos WHERE empresa_id = ? AND data_hora = ?',
       [empresaId, data_hora]
@@ -43,6 +54,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Este horário já está ocupado.' }, { status: 409 });
     }
 
+    // Inserir o novo agendamento
     const result = await query(
       'INSERT INTO agendamentos (empresa_id, user_id, data_hora, servico, nome, telefone, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [empresaId, userId, data_hora, servico, nome, telefone, 'pendente']

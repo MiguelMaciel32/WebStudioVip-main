@@ -37,25 +37,20 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Legal</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/termos" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
                   Termos de Uso
                 </Link>
               </li>
               <li>
-                <Link href="/privacidade" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
                   Política de Privacidade
-                </Link>
-              </li>
-              <li>
-                <Link href="/trabalhe-conosco" className="text-gray-300 hover:text-white transition-colors">
-                  Trabalhe Conosco
                 </Link>
               </li>
             </ul>
           </div>
         </div>
         <div className="container mx-auto mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-300">&copy; 2023 Sua Empresa. Todos os direitos reservados.</p>
+          <p className="text-gray-300">&copy; 2023 StudioVips. Todos os direitos reservados.</p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <a href="#" className="text-gray-300 hover:text-white transition-colors" aria-label="Facebook">
               <Facebook size={24} />

@@ -145,6 +145,7 @@ export default function Component() {
               <CarouselContent>
                 {empresas.length > 0 ? (
                   empresas.map((empresa) => (
+                    <Link key={empresa.id} href={`/sobreempresa/${empresa.id}`}>
                     <CarouselItem key={empresa.id} className="md:basis-1/2 lg:basis-1/3">
                       <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg mx-auto">
                         <CardHeader className="p-0 relative">
@@ -175,6 +176,7 @@ export default function Component() {
                         </CardContent>
                       </Card>
                     </CarouselItem>
+                    </Link>
                   ))
                 ) : (
                   <p className="text-center">Nenhuma empresa encontrada.</p>
@@ -187,21 +189,7 @@ export default function Component() {
         </div>
       </section>
 
-      <section id="help-section" className="w-full py-8 md:py-16 lg:py-24">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center gap-4">
-            <h2 className="text-xl font-bold text-center">
-              Alguma dúvida? Nós te ajudamos!
-            </h2>
-            <div className="flex w-full max-w-sm items-center gap-2">
-              <SearchInputWithIcon>
-                <Mail className="w-4 h-4" />
-              </SearchInputWithIcon>
-              <Button>Enviar</Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      
     </main>
   )
 }

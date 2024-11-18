@@ -10,7 +10,8 @@ const nextConfig = {
       'anotherdomain.com',
       'storage.googleapis.com',
       'studiovip-6913f.appspot.com',
-      'firebasestorage.googleapis.com'
+      'firebasestorage.googleapis.com',
+      'fieb.edu.br'
     ]
   } 
 }; 

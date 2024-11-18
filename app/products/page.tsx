@@ -39,11 +39,11 @@ async function fetchProducts(): Promise<Product[]> {
   }
 }
 
-// Função para calcular a diferença entre dois CEPs
+
 function calculateCepDifference(cep1: string, cep2: string): number {
-  const cep1Number = parseInt(cep1.replace(/\D/g, '')); // Remove caracteres não numéricos
-  const cep2Number = parseInt(cep2.replace(/\D/g, '')); // Remove caracteres não numéricos
-  return Math.abs(cep1Number - cep2Number); // Retorna a diferença absoluta entre os dois
+  const cep1Number = parseInt(cep1.replace(/\D/g, ''));
+  const cep2Number = parseInt(cep2.replace(/\D/g, ''));
+  return Math.abs(cep1Number - cep2Number); 
 }
 
 export default function PaginaDeProdutos() {
@@ -51,7 +51,7 @@ export default function PaginaDeProdutos() {
   const [loading, setLoading] = useState(true);
   const [userCep, setUserCep] = useState<string | null>(null);
 
-  // Recupera os dados do produto e do CEP do usuário
+
   useEffect(() => {
     async function loadProducts() {
       try {

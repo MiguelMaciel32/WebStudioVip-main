@@ -17,7 +17,7 @@ interface ImagePart {
 }
 
 const MAX_RETRIES = 3
-const BASE_DELAY = 1000 // 1 second
+const BASE_DELAY = 1000 
 
 export default function ChatIA() {
   const [userPromptValue, setUserPromptValue] = useState<string>("")

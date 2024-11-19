@@ -28,7 +28,7 @@ export async function PUT(req: Request) {
     console.log('Token decodificado:', decodedToken);
 
     const { about } = await req.json();
-    const userId = decodedToken.id; // Fallback para usar o ID do token
+    const userId = decodedToken.id;
     console.log('Dados recebidos:', { userId, about });
 
     if (!userId || typeof about !== 'string') {
@@ -36,11 +36,10 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Dados inválidos.' }, { status: 400 });
     }
 
-    // Verificar se o registro já existe no banco
+  
     const existingUser = await query('SELECT id FROM empresas WHERE id = ?', [userId]);
 
     if (existingUser.length > 0) {
-      // Atualizar registro existente
       await query('UPDATE empresas SET sobre = ? WHERE id = ?', [about, userId]);
       console.log('Registro atualizado.');
     } 

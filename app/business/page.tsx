@@ -19,7 +19,6 @@ export default function BusinessCadastro() {
   const [cidade, setCidade] = useState<string>("");
   const router = useRouter();
 
-  // Função para formatar o telefone
   const formatarTelefone = (valor: string): string => {
     const cleaned = valor.replace(/\D/g, '');
     const formatted = cleaned.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
@@ -31,7 +30,6 @@ export default function BusinessCadastro() {
     setTelefone(formattedTelefone);
   };
 
-  // Função para buscar o endereço pelo CEP
   const buscarEndereco = async (cep: string) => {
     if (cep.length === 8) {
       try {
@@ -56,7 +54,7 @@ export default function BusinessCadastro() {
     }
   };
 
-  // useEffect para buscar o endereço quando o CEP é alterado
+
   useEffect(() => {
     if (cep.length === 8) {
       buscarEndereco(cep);
@@ -81,7 +79,7 @@ export default function BusinessCadastro() {
         toast({
           description: "Conta empresarial criada com sucesso!",
         });
-        router.push('/profile-business');
+        router.push('/login/business');
       } else {
         toast({
           description: `Erro: ${data.error || 'Erro ao criar conta empresarial!'}`,

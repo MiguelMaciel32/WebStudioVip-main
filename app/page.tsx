@@ -6,7 +6,7 @@ import "driver.js/dist/driver.css"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { SparkleIcon, Sparkles, Mail, MapPin, Star } from "lucide-react"
+import { SparkleIcon, Sparkles, Mail, MapPin, Star, Loader2 } from "lucide-react"
 import {
   Carousel,
   CarouselContent,
@@ -139,7 +139,9 @@ export default function Component() {
         <div className="container px-4 md:px-6">
           <h2 className="text-xl font-bold text-center mb-6">Empresas Populares que Confiam em Nós</h2>
           {loading ? (
-            <p className="text-center">Carregando dados...</p>
+           <div className="flex justify-center items-center h-64">
+           <Loader2 className="w-8 h-8 animate-spin text-primary" />
+         </div>
           ) : (
             <Carousel className="w-full max-w-6xl mx-auto">
               <CarouselContent>

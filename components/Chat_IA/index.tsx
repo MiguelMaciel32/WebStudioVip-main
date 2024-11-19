@@ -83,11 +83,6 @@ export default function ChatIA() {
       }
     } catch (error) {
       console.error("Erro ao obter resposta:", error)
-      toast({
-        title: "Erro",
-        description: "Houve um erro ao processar sua solicitação. Por favor, tente novamente.",
-        variant: "destructive",
-      })
     } finally {
       setIsLoading(false)
     }

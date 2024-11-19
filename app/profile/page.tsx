@@ -67,6 +67,15 @@ export default function Profile() {
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files?.[0]) {
             const file = event.target.files[0];
+    
+            const allowedTypes = ["image/jpeg", "image/png"];
+            if (!allowedTypes.includes(file.type)) {
+                toast({ title: "Apenas arquivos JPEG ou PNG são permitidos." });
+                setSelectedFile(null);
+                setImagePreview(null);
+                return;
+            }
+    
             setSelectedFile(file);
             setImagePreview(URL.createObjectURL(file));
         } else {
@@ -74,7 +83,7 @@ export default function Profile() {
             setImagePreview(null);
         }
     };
-
+    
     const handleImageClick = () => {
         document.getElementById('fileInput')?.click();
     };

@@ -50,7 +50,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="container mx-auto mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-300">&copy; 2023 StudioVips. Todos os direitos reservados.</p>
+          <p className="text-gray-300">&copy; 2024 StudioVips. Todos os direitos reservados.</p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <a href="#" className="text-gray-300 hover:text-white transition-colors" aria-label="Facebook">
               <Facebook size={24} />

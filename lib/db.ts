@@ -1,6 +1,5 @@
 import mysql, { OkPacket, RowDataPacket, Connection } from 'mysql2/promise';
 
-// Função para criar uma conexão com o banco de dados
 export const createConnection = async (): Promise<Connection> => {
   return mysql.createConnection({
     host: 'bd1.highti.com.br',
@@ -11,7 +10,7 @@ export const createConnection = async (): Promise<Connection> => {
   });
 };
 
-// Função para executar consultas de leitura
+
 export const query = async <T = any>(sql: string, values: any[] = []): Promise<T[]> => {
   const connection = await createConnection();
   try {
@@ -27,7 +26,7 @@ export const query = async <T = any>(sql: string, values: any[] = []): Promise<T
   }
 };
 
-// Função para executar consultas de escrita
+
 export const execute = async (sql: string, values: any[] = []): Promise<OkPacket> => {
   const connection = await createConnection();
   try {
@@ -43,7 +42,6 @@ export const execute = async (sql: string, values: any[] = []): Promise<OkPacket
   }
 };
 
-// Função para executar consultas dentro de uma transação
 export const executeTransaction = async (queries: [string, any[]][]): Promise<void> => {
   const connection = await createConnection();
   try {

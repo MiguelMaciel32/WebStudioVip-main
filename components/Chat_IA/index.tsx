@@ -8,6 +8,7 @@ import { Bot, ImageIcon, Send, X } from 'lucide-react'
 import { Textarea } from "@/components/ui/textarea"
 import { model } from "@/utils/GeminiUtils"
 import { useToast } from "@/components/ui/use-toast"
+import { Loader2 } from 'lucide-react';
 
 interface ImagePart {
   inlineData: {
@@ -16,8 +17,6 @@ interface ImagePart {
   }
 }
 
-const MAX_RETRIES = 3
-const BASE_DELAY = 1000 
 
 export default function ChatIA() {
   const [userPromptValue, setUserPromptValue] = useState<string>("")
@@ -48,9 +47,9 @@ export default function ChatIA() {
     })
   }
 
-  const runWithRetry = async (userPrompt: string, retryCount = 0): Promise<void> => {
+  const run = async (userPrompt: string): Promise<void> => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       let imagePart: ImagePart[] = []
 
       if (uploadedImage) {
@@ -84,14 +83,6 @@ export default function ChatIA() {
       }
     } catch (error) {
       console.error("Erro ao obter resposta:", error)
-      
-      if (error instanceof Error && error.message.includes("The model is overloaded") && retryCount < MAX_RETRIES) {
-        const delay = BASE_DELAY * Math.pow(2, retryCount)
-        
-        setTimeout(() => runWithRetry(userPrompt, retryCount + 1), delay)
-        return
-      }
-      
       toast({
         title: "Erro",
         description: "Houve um erro ao processar sua solicitação. Por favor, tente novamente.",
@@ -102,10 +93,6 @@ export default function ChatIA() {
     }
   }
 
-  const run = useCallback((userPrompt: string): void => {
-    if (isLoading) return
-    runWithRetry(userPrompt)
-  }, [isLoading])
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -170,8 +157,17 @@ export default function ChatIA() {
                 onChange={handleImageUpload}
               />
               <Button onClick={() => run(userPromptValue)} disabled={isLoading || (!userPromptValue.trim() && !uploadedImage)}>
-                {isLoading ? "Enviando..." : "Enviar"}
-                <Send className="ml-2 h-4 w-4" />
+                {isLoading ? (
+                  <>
+                    <span className="mr-2">Enviando</span>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    Enviar
+                    <Send className="ml-2 h-4 w-4" />
+                  </>
+                )}
               </Button>
             </div>
           </section>

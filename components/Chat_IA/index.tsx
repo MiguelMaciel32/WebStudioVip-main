@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import { Bot, Image, Send } from 'lucide-react'
+import { Bot, ImageIcon, Send, X } from 'lucide-react'
 import { Textarea } from "@/components/ui/textarea"
 import { model } from "@/utils/GeminiUtils"
 import { useToast } from "@/components/ui/use-toast"
@@ -15,6 +15,9 @@ interface ImagePart {
     mimeType: string
   }
 }
+
+const MAX_RETRIES = 3
+const BASE_DELAY = 1000 // 1 second
 
 export default function ChatIA() {
   const [userPromptValue, setUserPromptValue] = useState<string>("")
@@ -45,25 +48,23 @@ export default function ChatIA() {
     })
   }
 
-  const run = useCallback(async (userPrompt: string): Promise<void> => {
-    if (isLoading) return
-
-    setIsLoading(true)
-    let imagePart: ImagePart[] = []
-
-    if (uploadedImage) {
-      imagePart = [await fileToBase64(uploadedImage)]
-    }
-
-    const contextPrompt = `
-      Você foi criado como parte de um TCC chamado Studio VIP 2024, desenvolvido por 5 alunos para ajudar pessoas com problemas capilares e com foco em cuidados de cabelo, spa, e tatuagens. 
-      Você só deve responder perguntas sobre esses temas. 
-      Se a pergunta for sobre outro assunto, responda: "Desculpe, eu só posso responder perguntas relacionadas a cabelo, spa e tatuagens."
-      Sempre responda em português (PT-BR).
-      Se alguém perguntar o que é o Studio VIP, responda: "O Studio VIP é um site onde você pode realizar agendamentos automáticos com salões próximos a você, focado em serviços de beleza como cabelo, spa, e tatuagem."
-    `
-
+  const runWithRetry = async (userPrompt: string, retryCount = 0): Promise<void> => {
     try {
+      setIsLoading(true)
+      let imagePart: ImagePart[] = []
+
+      if (uploadedImage) {
+        imagePart = [await fileToBase64(uploadedImage)]
+      }
+
+      const contextPrompt = `
+        Você foi criado como parte de um TCC chamado Studio VIP 2024, desenvolvido por 5 alunos para ajudar pessoas com problemas capilares e com foco em cuidados de cabelo, spa, e tatuagens. 
+        Você só deve responder perguntas sobre esses temas. 
+        Se a pergunta for sobre outro assunto, responda: "Desculpe, eu só posso responder perguntas relacionadas a cabelo, spa e tatuagens."
+        Sempre responda em português (PT-BR).
+        Se alguém perguntar o que é o Studio VIP, responda: "O Studio VIP é um site onde você pode realizar agendamentos automáticos com salões próximos a você, focado em serviços de beleza como cabelo, spa, e tatuagem."
+      `
+
       let result
 
       if (imagePart.length > 0) {
@@ -83,6 +84,14 @@ export default function ChatIA() {
       }
     } catch (error) {
       console.error("Erro ao obter resposta:", error)
+      
+      if (error instanceof Error && error.message.includes("The model is overloaded") && retryCount < MAX_RETRIES) {
+        const delay = BASE_DELAY * Math.pow(2, retryCount)
+        
+        setTimeout(() => runWithRetry(userPrompt, retryCount + 1), delay)
+        return
+      }
+      
       toast({
         title: "Erro",
         description: "Houve um erro ao processar sua solicitação. Por favor, tente novamente.",
@@ -91,12 +100,24 @@ export default function ChatIA() {
     } finally {
       setIsLoading(false)
     }
-  }, [isLoading, uploadedImage, toast])
+  }
+
+  const run = useCallback((userPrompt: string): void => {
+    if (isLoading) return
+    runWithRetry(userPrompt)
+  }, [isLoading])
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
       setUploadedImage(file)
+    }
+  }
+
+  const handleRemoveImage = () => {
+    setUploadedImage(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
   }
 
@@ -138,7 +159,7 @@ export default function ChatIA() {
             />
             <div className="flex justify-between items-center">
               <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-                <Image className="mr-2 h-4 w-4" />
+                <ImageIcon className="mr-2 h-4 w-4" />
                 {uploadedImage ? "Trocar imagem" : "Adicionar imagem"}
               </Button>
               <input
@@ -148,20 +169,28 @@ export default function ChatIA() {
                 accept="image/*"
                 onChange={handleImageUpload}
               />
-              <Button onClick={() => run(userPromptValue)} disabled={isLoading || !userPromptValue.trim()}>
+              <Button onClick={() => run(userPromptValue)} disabled={isLoading || (!userPromptValue.trim() && !uploadedImage)}>
                 {isLoading ? "Enviando..." : "Enviar"}
                 <Send className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </section>
           {uploadedImage && (
-            <section className="mt-4">
+            <section className="mt-4 relative">
               <p>Imagem carregada:</p>
               <img
                 src={URL.createObjectURL(uploadedImage)}
                 alt="Pré-visualização da imagem"
                 className="max-w-xs max-h-64 object-contain border rounded"
               />
+              <Button
+                variant="destructive"
+                size="icon"
+                className="absolute top-0 right-0"
+                onClick={handleRemoveImage}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </section>
           )}
         </section>

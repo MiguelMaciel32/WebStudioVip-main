@@ -43,7 +43,10 @@ export default function Business() {
                 if (data.requiresOtp) {
                     setShowFaceID(true);
                 } else {
-                    router.push('/profile-business'); 
+                    setTimeout(() => {
+                        router.push('/profile-business'); 
+                        window.location.reload();
+                      }, 1000);
                 }
             } else {
                 setError(data.error || 'Erro ao fazer login.');

@@ -1,70 +1,58 @@
-"use client";
+"use client"
 
-import { useState, useRef, useEffect } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Bot, Image, Send } from 'lucide-react';
-import { Textarea } from "@/components/ui/textarea";
-import { model } from "@/utils/GeminiUtils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState, useRef, useCallback } from "react"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+import { Bot, Image, Send } from 'lucide-react'
+import { Textarea } from "@/components/ui/textarea"
+import { model } from "@/utils/GeminiUtils"
+import { useToast } from "@/components/ui/use-toast"
 
 interface ImagePart {
   inlineData: {
-    data: string;
-    mimeType: string;
-  };
+    data: string
+    mimeType: string
+  }
 }
 
 export default function ChatIA() {
-  const [userPromptValue, setUserPromptValue] = useState<string>("");
-  const [geminiResponse, setGeminiResponse] = useState<string>("");
-  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    if (isOpen && textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, [isOpen]);
+  const [userPromptValue, setUserPromptValue] = useState<string>("")
+  const [geminiResponse, setGeminiResponse] = useState<string>("")
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { toast } = useToast()
 
   const formatBoldText = (text: string): string => {
-    return text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-  };
+    return text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+  }
 
   const fileToBase64 = (file: File): Promise<ImagePart> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onloadend = () => {
-        const base64Data = reader.result as string;
+        const base64Data = reader.result as string
         resolve({
           inlineData: {
             data: base64Data.split(",")[1],
             mimeType: file.type,
           },
-        });
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
+        })
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
 
-  const run = async (userPrompt: string): Promise<void> => {
-    if (!userPrompt.trim()) return;
+  const run = useCallback(async (userPrompt: string): Promise<void> => {
+    if (isLoading) return
 
-    let imagePart: ImagePart[] = [];
+    setIsLoading(true)
+    let imagePart: ImagePart[] = []
 
     if (uploadedImage) {
-      imagePart = [await fileToBase64(uploadedImage)];
+      imagePart = [await fileToBase64(uploadedImage)]
     }
 
     const contextPrompt = `
@@ -73,118 +61,111 @@ export default function ChatIA() {
       Se a pergunta for sobre outro assunto, responda: "Desculpe, eu só posso responder perguntas relacionadas a cabelo, spa e tatuagens."
       Sempre responda em português (PT-BR).
       Se alguém perguntar o que é o Studio VIP, responda: "O Studio VIP é um site onde você pode realizar agendamentos automáticos com salões próximos a você, focado em serviços de beleza como cabelo, spa, e tatuagem."
-    `;
+    `
 
     try {
-      let result;
+      let result
 
       if (imagePart.length > 0) {
-        result = await model.generateContent([contextPrompt, userPrompt, ...imagePart]);
+        result = await model.generateContent([contextPrompt, userPrompt, ...imagePart])
       } else {
-        result = await model.generateContent([contextPrompt, userPrompt]);
+        result = await model.generateContent([contextPrompt, userPrompt])
       }
 
-      const response = await result.response;
-      const text = await response.text();
-      const formattedText = formatBoldText(text);
-      setGeminiResponse(formattedText);
-      setUserPromptValue("");
-      setUploadedImage(null);
+      const response = await result.response
+      const text = await response.text()
+      const formattedText = formatBoldText(text)
+      setGeminiResponse(formattedText)
+      setUserPromptValue("")
+      setUploadedImage(null)
       if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = ""
       }
     } catch (error) {
-      console.error("Erro ao obter resposta:", error);
-      setGeminiResponse("Desculpe, houve um erro ao processar sua solicitação.");
+      console.error("Erro ao obter resposta:", error)
+      toast({
+        title: "Erro",
+        description: "Houve um erro ao processar sua solicitação. Por favor, tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
-  };
+  }, [isLoading, uploadedImage, toast])
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const file = event.target.files?.[0]
     if (file) {
-      setUploadedImage(file);
+      setUploadedImage(file)
     }
-  };
+  }
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      run(userPromptValue);
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault()
+      run(userPromptValue)
     }
-  };
+  }
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+    <Sheet>
       <SheetTrigger asChild>
-        <Button
-          className="fixed bottom-4 right-4 size-12 rounded-full flex justify-center items-center"
-          onClick={() => setIsOpen(true)}
-        >
-          <Bot size={24} />
-        </Button>
+        <section className="fixed bottom-2 right-2 size-12 rounded-full flex justify-center items-center bg-primary ">
+          <Bot size={32} className="text-primary-foreground" />
+        </section>
       </SheetTrigger>
-      <SheetContent className="w-[90vw] sm:max-w-[425px] flex flex-col h-full">
+      <SheetContent>
         <SheetHeader>
           <SheetTitle>StudioVip I.A</SheetTitle>
-          <SheetDescription>
-            Uma inteligência artificial especializada em beleza capilar.
-          </SheetDescription>
+          <SheetDescription>é uma inteligência artificial especializada em beleza capilar.</SheetDescription>
         </SheetHeader>
         <Separator className="my-4" />
-        <ScrollArea className="flex-grow mb-4">
-          {geminiResponse && (
-            <div className="bg-primary/10 p-4 rounded-lg mb-4">
-              <h2 
-                className="text-sm text-primary"
-                dangerouslySetInnerHTML={{ __html: geminiResponse }}
+        <section className="h-[calc(100vh-200px)] flex flex-col">
+          <section className="flex-1 overflow-y-auto space-y-4 mb-4">
+            {geminiResponse && (
+              <section className="bg-primary p-4 rounded-lg max-w-[80%] text-primary-foreground">
+                <h2 dangerouslySetInnerHTML={{ __html: geminiResponse }} />
+              </section>
+            )}
+          </section>
+          <section className="flex flex-col gap-4">
+            <Textarea
+              value={userPromptValue}
+              onChange={(e) => setUserPromptValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Digite sua dúvida..."
+              className="resize-none"
+            />
+            <div className="flex justify-between items-center">
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                <Image className="mr-2 h-4 w-4" />
+                {uploadedImage ? "Trocar imagem" : "Adicionar imagem"}
+              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                accept="image/*"
+                onChange={handleImageUpload}
               />
+              <Button onClick={() => run(userPromptValue)} disabled={isLoading || !userPromptValue.trim()}>
+                {isLoading ? "Enviando..." : "Enviar"}
+                <Send className="ml-2 h-4 w-4" />
+              </Button>
             </div>
-          )}
+          </section>
           {uploadedImage && (
-            <div className="mt-4">
-              <p className="text-sm text-muted-foreground mb-2">Imagem carregada:</p>
+            <section className="mt-4">
+              <p>Imagem carregada:</p>
               <img
                 src={URL.createObjectURL(uploadedImage)}
                 alt="Pré-visualização da imagem"
-                className="max-w-full h-auto max-h-64 object-contain border rounded"
+                className="max-w-xs max-h-64 object-contain border rounded"
               />
-            </div>
+            </section>
           )}
-        </ScrollArea>
-        <div className="flex items-end gap-2">
-          <Textarea
-            ref={textareaRef}
-            value={userPromptValue}
-            onChange={(e) => setUserPromptValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Digite sua dúvida..."
-            className="flex-grow resize-none"
-            rows={3}
-          />
-          <div className="flex flex-col gap-2">
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Image size={18} />
-            </Button>
-            <Button
-              size="icon"
-              onClick={() => run(userPromptValue)}
-            >
-              <Send size={18} />
-            </Button>
-          </div>
-        </div>
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="image/*"
-          onChange={handleImageUpload}
-        />
+        </section>
       </SheetContent>
     </Sheet>
-  );
+  )
 }

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import Image from "next/image";
 import { parseJwt } from "../../../lib/jwtUtils"; 
+import {  Loader2 } from "lucide-react";
 
 interface Empresa {
   id: number;
@@ -58,7 +59,9 @@ function SobreEmpresa() {
   }, [id]);
 
   if (!empresa) {
-    return <p>Carregando...</p>;
+    return  <div className="flex justify-center items-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>;
   }
 
   return (

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Star } from "lucide-react";
+import { MapPin, Star, Loader2 } from "lucide-react";
 
 interface Product {
   id: number;
@@ -39,7 +39,6 @@ async function fetchProducts(): Promise<Product[]> {
   }
 }
 
-
 function calculateCepDifference(cep1: string, cep2: string): number {
   const cep1Number = parseInt(cep1.replace(/\D/g, ''));
   const cep2Number = parseInt(cep2.replace(/\D/g, ''));
@@ -50,7 +49,6 @@ export default function PaginaDeProdutos() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [userCep, setUserCep] = useState<string | null>(null);
-
 
   useEffect(() => {
     async function loadProducts() {
@@ -96,7 +94,9 @@ export default function PaginaDeProdutos() {
       </p>
 
       {loading ? (
-        <p className="text-center mt-8">Carregando...</p>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
       ) : (
         <section className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {products.length > 0 ? (

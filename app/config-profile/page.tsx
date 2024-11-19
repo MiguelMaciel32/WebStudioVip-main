@@ -194,7 +194,8 @@ export default function ConfigurarEmpresa() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          descricao: newAbout
+          userId: profile?.id,
+          about: newAbout 
         })
       });
   

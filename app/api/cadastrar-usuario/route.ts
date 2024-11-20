@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import bcrypt from 'bcrypt';
-//a
+//ass
 
 const validarTelefone = (telefone: any) => {
     telefone = telefone.replace(/\D/g, ''); 
